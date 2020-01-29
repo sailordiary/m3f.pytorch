@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.signal import medfilt
+from matplotlib import pyplot as plt
 
 
 def concordance_cc2(r1, r2):
