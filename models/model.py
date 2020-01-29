@@ -75,10 +75,10 @@ class AffWild2VA(pl.LightningModule):
         a.extend([arousal[i][: lens[i]] for i in range(lens.size(0))])
 
         return {
-            'v_gt': torch.cat(v), 'a_gt': torch.cat(a),
-            'v_pred': torch.cat(v_hat), 'a_pred': torch.cat(a_hat),
-            'vid_names': batch['vid_name'],
-            'start_frames': batch['start']
+            'v_gt': torch.cat(v).cpu(), 'a_gt': torch.cat(a).cpu(),
+            'v_pred': torch.cat(v_hat).cpu(), 'a_pred': torch.cat(a_hat).cpu(),
+            'vid_names': batch['vid_name'].cpu(),
+            'start_frames': batch['start'].cpu()
         }
 
     def validation_end(self, outputs):
@@ -98,14 +98,14 @@ class AffWild2VA(pl.LightningModule):
             # gather batch elements by file name
             for vid_name, st_frame, v_gt, a_gt, v_pred, a_pred in zip(x['vid_names'], x['start_frames'], x['v_gt'], x['a_gt'], x['v_pred'], x['a_pred']):
                 if vid_name in predictions.keys():
-                    predictions[vid_name].append((st_frame, v_gt.cpu(), a_gt.cpu(), v_pred.cpu(), a_pred.cpu()))
+                    predictions[vid_name].append((st_frame, v_gt, a_gt, v_pred, a_pred))
                 else:
-                    predictions[vid_name] = [(st_frame, v_gt.cpu(), a_gt.cpu(), v_pred.cpu(), a_pred.cpu())]
+                    predictions[vid_name] = [(st_frame, v_gt, a_gt, v_pred, a_pred)]
         pred_v, pred_a, gt_v, gt_a = {}, {}, {}, {}
         for k, w in predictions.items():
             # sort segment predictions by start frame index
             sorted_preds = sorted(w)
-            print (sorted_preds)
+            print (x[1])
             gt_v[k] = torch.cat([x[1] for x in sorted_preds])
             gt_a[k] = torch.cat([x[2] for x in sorted_preds])
             pred_v[k] = torch.cat([x[3] for x in sorted_preds])
@@ -135,8 +135,8 @@ class AffWild2VA(pl.LightningModule):
         v_hat, a_hat = [], []
         
         x = batch['video']
-        y_hat = self.forward(x)
-        valence_hat, arousal_hat = y_hat[..., 0].cpu(), y_hat[..., 1].cpu()
+        y_hat = self.forward(x).cpu()
+        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
         lens = batch['length']
 
         v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
@@ -144,8 +144,8 @@ class AffWild2VA(pl.LightningModule):
         
         return {
             'v_pred': v_hat, 'a_pred': a_hat,
-            'vid_names': batch['vid_name'],
-            'start_frames': batch['start']
+            'vid_names': batch['vid_name'].cpu(),
+            'start_frames': batch['start'].cpu()
         }
 
     def test_end(self, outputs):
