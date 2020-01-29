@@ -1,4 +1,7 @@
+# PyTorch
 lightning_logs
+*.pt
+*.pth
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

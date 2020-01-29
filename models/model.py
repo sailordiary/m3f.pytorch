@@ -109,7 +109,7 @@ class AffWild2VA(pl.LightningModule):
         
         x = batch['video']
         y_hat = self.forward(x)
-        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
+        valence_hat, arousal_hat = y_hat[..., 0].cpu(), y_hat[..., 1].cpu()
         lens = batch['length']
 
         v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
