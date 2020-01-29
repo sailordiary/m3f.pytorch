@@ -16,6 +16,7 @@ class AffWild2VA(pl.LightningModule):
     def __init__(self, hparams):
         super(AffWild2VA, self).__init__()
         self.hparams = hparams
+        print (self.hparams)
         if self.hparams.backbone == 'resnet':
             self.net = VA_3DResNet(
                 hiddenDim=self.hparams.num_hidden,
