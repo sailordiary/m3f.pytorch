@@ -104,7 +104,6 @@ class AffWild2VA(pl.LightningModule):
         for k, w in predictions.items():
             # sort segment predictions by start frame index
             sorted_preds = sorted(w)
-            print (sorted_preds)
             gt_v[k] = torch.cat([x[1] for x in sorted_preds])
             gt_a[k] = torch.cat([x[2] for x in sorted_preds])
             pred_v[k] = torch.cat([x[3] for x in sorted_preds])
