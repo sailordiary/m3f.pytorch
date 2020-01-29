@@ -96,7 +96,7 @@ class AffWild2VA(pl.LightningModule):
         predictions = {}
         for x in outputs:
             # gather batch elements by file name
-            for vid_name, st_frame, v_gt, a_gt, v_pred, a_pred in zip(x['vid_names'], x['start_frames'], x['gt'], x['gt'], x['v_pred'], x['a_pred']):
+            for vid_name, st_frame, v_gt, a_gt, v_pred, a_pred in zip(x['vid_names'], x['start_frames'], x['v_gt'], x['a_gt'], x['v_pred'], x['a_pred']):
                 if vid_name in predictions.keys():
                     predictions[vid_name].append((st_frame, v_gt, a_gt, v_pred, a_pred))
                 else:
