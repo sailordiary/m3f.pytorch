@@ -63,7 +63,7 @@ class AffWild2VA(pl.LightningModule):
         
         x = batch['video']
         y_hat = self.forward(x)
-        valence_hat, arousal_hat = y_hat[..., 0].cpu(), y_hat[..., 1].cpu()
+        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
         lens = batch['length']
 
         v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
@@ -82,10 +82,10 @@ class AffWild2VA(pl.LightningModule):
         }
 
     def validation_end(self, outputs):
-        all_v_gt = torch.cat([x['v_gt'] for x in outputs])
-        all_a_gt = torch.cat([x['a_gt'] for x in outputs])
-        all_v_pred = torch.cat([x['v_pred'] for x in outputs])
-        all_a_pred = torch.cat([x['a_pred'] for x in outputs])
+        all_v_gt = torch.cat([x['v_gt'].cpu() for x in outputs])
+        all_a_gt = torch.cat([x['a_gt'].cpu() for x in outputs])
+        all_v_pred = torch.cat([x['v_pred'].cpu() for x in outputs])
+        all_a_pred = torch.cat([x['a_pred'].cpu() for x in outputs])
 
         all_ccc_v = concordance_cc2(all_v_gt, all_v_pred)
         all_ccc_a = concordance_cc2(all_a_gt, all_a_pred)
