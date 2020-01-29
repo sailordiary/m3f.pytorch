@@ -191,4 +191,3 @@ class VA_3DDenseNet(nn.Module):
             elif isinstance(m, nn.BatchNorm1d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-

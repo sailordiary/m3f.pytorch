@@ -188,7 +188,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def train_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2iBugSequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch)
+            dataset = AffWild2iBugSequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout)
         else:
             # TODO: implement framewise
             raise NotImplementedError
@@ -240,6 +240,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--optimizer', default='adam', type=str)
 
         parser.add_argument('--num_hidden', default=512, type=int)
+        parser.add_argument('--cutout', action='store_true', default=False)
 
         # training specific (for this model)
         parser.add_argument('--distributed', action='store_true', default=False)

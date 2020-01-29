@@ -86,11 +86,12 @@ class AffWild2iBugSequenceDataset(Dataset):
     window_len: length of temporal crop window
     windows_per_epoch: how many times each video should be sampled in one epoch
     '''
-    def __init__(self, split, path, window_len=16, windows_per_epoch=20):
+    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True):
         self.split = split
         self.path = path
         self.window_len = window_len
         self.windows_per_epoch = windows_per_epoch
+        self.apply_cutout = apply_cutout
         
         nb_frames = [l.split(',') for l in open(os.path.join(self.path, 'nb_frames.csv'), 'r').read().splitlines()]
         self.nb_frames = {k: int(w) for k, w in nb_frames} # between 73 and 47419
@@ -142,7 +143,7 @@ class AffWild2iBugSequenceDataset(Dataset):
                 if retry_times == 3: break
         
         # note that frame index begins with 1
-        cutout_augment = self.split == 'train'
+        cutout_augment = self.split == 'train' and self.apply_cutout
         mirror_augment = self.split == 'train' and random.random() > 0.5
         inputs = load_video(src_fold, start_frame, track_len,
                             mirror_augment, False, cutout_augment)
