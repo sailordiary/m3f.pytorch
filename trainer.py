@@ -3,10 +3,20 @@ from pytorch_lightning import Trainer
 from argparse import ArgumentParser
 from models.model import AffWild2VA
 
+import torch
+import random
+import numpy as np
+
 logging.basicConfig(level=logging.INFO)
 
 
 def main(hparams):
+    torch.backends.cudnn.deterministic = True
+    random.seed(hparams.seed)
+    torch.manual_seed(hparams.seed)
+    torch.cuda.manual_seed(hparams.seed)
+    np.random.seed(hparams.seed)
+
     # init module
     model = AffWild2VA(hparams)
 
@@ -26,6 +36,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(add_help=False)
     parser.add_argument('--gpus', type=str, default='2')
     parser.add_argument('--nodes', type=int, default=1)
+    parser.add_argument('--seed', type=int, default=12345)
 
     # give the module a chance to add own params
     parser = AffWild2VA.add_model_specific_args(parser)
