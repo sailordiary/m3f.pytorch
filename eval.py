@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main(hparams):
     # init module
-    model = AffWild2VA(hparams)
+    model = AffWild2VA(hparams).load_from_checkpoint(hparams.checkpoint)
 
     trainer = Trainer(
         gpus=hparams.gpus,
@@ -22,6 +22,8 @@ if __name__ == '__main__':
     parser = ArgumentParser(add_help=False)
     parser.add_argument('--gpus', type=str, default='2,3')
     parser.add_argument('--nodes', type=int, default=1)
+
+    parser.add_argument('--checkpoint', type=str, default='')
 
     # give the module a chance to add own params
     parser = AffWild2VA.add_model_specific_args(parser)
