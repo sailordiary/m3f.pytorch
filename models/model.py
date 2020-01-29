@@ -1,9 +1,10 @@
 from .dataset import AffWild2iBugSequenceDataset
 from .backbone import *
-from .utils import *
+from .utils import concordance_cc2, mse
 
 from argparse import ArgumentParser
 
+import torch
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 
@@ -27,65 +28,110 @@ class AffWild2VA(pl.LightningModule):
         x = (x - 127.5) / 127.5
         return self.net(x)
     
+    def ccc_loss(self, y_hat, y):
+        return 1 - concordance_cc2(y_hat, y)
+    
     def training_step(self, batch, batch_idx):
         x = batch['video']
         valence, arousal = batch['label_valence'], batch['label_arousal']
         y_hat = self.forward(x)
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
-        loss_v = F.mse_loss(valence, valence_hat)
-        loss_a = F.mse_loss(arousal, arousal_hat)
-        # TODO add CCC loss?
-        loss = loss_v + loss_a
-        return {'loss': loss,
-                'progress_bar': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss},
-                'log': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
+        loss_v = self.ccc_loss(valence.view(-1), valence_hat.view(-1))
+        loss_a = self.ccc_loss(arousal.view(-1), arousal_hat.view(-1))
+        loss = 0.5 * loss_v + 0.5 * loss_a
+        return {
+            'loss': loss,
+            'progress_bar': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss},
+            'log': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         }
-    
+
     def validation_step(self, batch, batch_idx):
-        v = np.array([], dtype=np.float32)
-        a = np.array([], dtype=np.float32)
-        v_hat = np.array([], dtype=np.float32)
-        a_hat = np.array([], dtype=np.float32)
+        v, a, v_hat, a_hat = [], [], [], []
         
         x = batch['video']
         y_hat = self.forward(x)
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
         lens = batch['length']
+
+        v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
+        a_hat.extend([arousal_hat[i][: lens[i]] for i in range(lens.size(0))])
         
-        if 'label_valence' in batch.keys():
-            valence, arousal = batch['label_valence'], batch['label_arousal']
-            loss_v = F.mse_loss(valence, valence_hat)
-            loss_a = F.mse_loss(arousal, arousal_hat)
-            loss = loss_v + loss_a
-            # TODO: refactor this mess
-            for i, (v_batch, a_batch, vhat_batch, ahat_batch) in enumerate(zip(valence, arousal, valence_hat, arousal_hat)):
-                v = np.concatenate((v, v_batch.cpu().numpy()[: lens[i]]))
-                a = np.concatenate((a, a_batch.cpu().numpy()[: lens[i]]))
-                v_hat = np.concatenate((v_hat, vhat_batch.cpu().numpy()[: lens[i]]))
-                a_hat = np.concatenate((a_hat, ahat_batch.cpu().numpy()[: lens[i]]))
-            ccc_valence = concordance_cc2(v, v_hat)
-            ccc_arousal = concordance_cc2(a, a_hat)
-            return {'val_loss_v': loss_v, 'val_loss_a': loss_a, 'val_loss': loss, 'val_ccc_v': ccc_valence, 'val_ccc_a': ccc_arousal}
-        else:
-            y_hat = self.forward(batch['video'])
-            return {'predictions': y_hat,
-                    'lengths': batch['length'],
-                    'vid_names': batch['vid_name'],
-                    'start_frames': batch['start_frame']}
-    
+        valence, arousal = batch['label_valence'], batch['label_arousal']
+
+        v.extend([valence[i][: lens[i]] for i in range(lens.size(0))])
+        a.extend([arousal[i][: lens[i]] for i in range(lens.size(0))])
+
+        return {
+            'v_gt': torch.cat(v), 'a_gt': torch.cat(a),
+            'v_pred': torch.cat(v_hat), 'a_pred': torch.cat(a_hat)
+        }
+
     def validation_end(self, outputs):
-        if 'val_loss' in outputs[0].keys():
-            avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-            avg_loss_v = torch.stack([x['val_loss_v'] for x in outputs]).mean()
-            avg_loss_a = torch.stack([x['val_loss_a'] for x in outputs]).mean()
-            avg_ccc_v = np.stack([x['val_ccc_v'] for x in outputs]).mean()
-            avg_ccc_a = np.stack([x['val_ccc_a'] for x in outputs]).mean()
-            return {'progress_bar': {'val_loss': avg_loss, 'val_ccc_v': avg_ccc_v, 'val_ccc_a': avg_ccc_a},
-                   'log': {'val_loss': avg_loss, 'val_loss_v': avg_loss_v, 'val_loss_a': avg_loss_a, 'val_ccc_v': avg_ccc_v, 'val_ccc_a': avg_ccc_a}}
-        else:
-            # TODO: implement test result collection scheme
-            # and collect CCC / MSE values
-            return outputs
+        all_v_gt = torch.cat([x['v_gt'] for x in outputs])
+        all_a_gt = torch.cat([x['a_gt'] for x in outputs])
+        all_v_pred = torch.cat([x['v_pred'] for x in outputs])
+        all_a_pred = torch.cat([x['a_pred'] for x in outputs])
+
+        all_ccc_v = concordance_cc2(all_v_gt, all_v_pred)
+        all_ccc_a = concordance_cc2(all_a_gt, all_a_pred)
+        all_mse_v = mse(all_v_pred, all_v_gt)
+        all_mse_a = mse(all_a_pred, all_a_gt)
+
+        return {
+            'progress_bar': {
+                'val_ccc_v': all_ccc_v,
+                'val_ccc_a': all_ccc_a
+            },
+            'log': {
+                'val_ccc_v': all_ccc_v,
+                'val_ccc_a': all_ccc_a,
+                'val_mse_v': all_mse_v,
+                'val_mse_a': all_mse_a
+            }
+        }
+    
+    def test_step(self, batch, batch_idx):
+        v_hat, a_hat = [], []
+        
+        x = batch['video']
+        y_hat = self.forward(x)
+        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
+        lens = batch['length']
+
+        v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
+        a_hat.extend([arousal_hat[i][: lens[i]] for i in range(lens.size(0))])
+        
+        return {
+            'v_pred': v_hat, 'a_pred': a_hat,
+            'vid_names': batch['vid_name'],
+            'start_frames': batch['start_frame']
+        }
+
+    def test_end(self, outputs):
+        predictions = {}
+        for x in outputs:
+            # gather batch elements by file name
+            for vid_name, st_frame, v, a in zip(x['vid_names'], x['start_frames'], x['v_pred'], x['a_pred']):
+                if vid_name in predictions.keys():
+                    predictions[vid_name].append((st_frame, v, a))
+                else:
+                    predictions[vid_name] = [(st_frame, v, a)]
+        final_predictions_v = {}
+        final_predictions_a = {}
+        for k, w in predictions.items():
+            # sort segment predictions by start frame index
+            sorted_preds = sorted(w)
+            pred_v = torch.cat([x[1] for x in sorted_preds])
+            pred_a = torch.cat([x[2] for x in sorted_preds])
+            final_predictions_v[k] = pred_v
+            final_predictions_a[k] = pred_a
+        # save predictions for further ensembling
+        torch.save({
+            'valence': final_predictions_v,
+            'arousal': final_predictions_a
+        }, 'predictions.pt')
+        
+        return {}
 
     def configure_optimizers(self):
         # REQUIRED

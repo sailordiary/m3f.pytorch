@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 from .resnet import ResNet, ResNetV2, BasicBlock, BasicBlockV2
 from .densenet import DenseNet52_3D
-from .rnn import *
+from .rnn import GRU
 
 
 class VA_3DVGGM(nn.Module):
@@ -53,9 +53,7 @@ class VA_3DVGGM(nn.Module):
             # nn.MaxPool3d(kernel_size=(1,2,2), stride=1)
         )
         # backend
-        if self.backend == 'lstm':
-            self.lstm = LSTM(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
-        elif self.backend == 'gru':
+        if self.backend == 'gru':
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
 
         # initialize
@@ -64,9 +62,7 @@ class VA_3DVGGM(nn.Module):
     def forward(self, x):
         x = self.v2p(x)
         x = x.squeeze().transpose(1, 2)
-        if self.backend == 'lstm':
-            x = self.lstm(x)
-        elif self.backend == 'gru':
+        if self.backend == 'gru':
             x = self.gru(x)
         return x
 
@@ -113,9 +109,7 @@ class VA_3DResNet(nn.Module):
         else:
             self.resnet = ResNet(BasicBlock, block_config, self.inputDim, zero_init_residual=True, agg_mode=frontend_agg_mode, fmap_out_size=final_fmap_size, use_cbam=use_cbam)
         # backend
-        if self.backend == 'lstm':
-            self.lstm = LSTM(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
-        elif self.backend == 'gru':
+        if self.backend == 'gru':
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
 
         # initialize
@@ -127,9 +121,7 @@ class VA_3DResNet(nn.Module):
         x = x.view(-1, 64, x.size(3), x.size(4))
         x = self.resnet(x)
         x = x.view(-1, self.frameLen, self.inputDim)
-        if self.backend == 'lstm':
-            x = self.lstm(x)
-        elif self.backend == 'gru':
+        if self.backend == 'gru':
             x = self.gru(x)
         return x
 
@@ -171,9 +163,7 @@ class VA_3DDenseNet(nn.Module):
         )
         self.densenet = DenseNet52_3D(self.inputDim, agg_mode=frontend_agg_mode, fmap_out_size=final_fmap_size)
         # backend
-        if self.backend == 'lstm':
-            self.lstm = LSTM(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
-        elif self.backend == 'gru':
+        if self.backend == 'gru':
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.every_frame)
 
         # initialize
@@ -182,9 +172,7 @@ class VA_3DDenseNet(nn.Module):
     def forward(self, x):
         x = self.c3d(x)
         x = self.densenet(x)
-        if self.backend == 'lstm':
-            x = self.lstm(x)
-        elif self.backend == 'gru':
+        if self.backend == 'gru':
             x = self.gru(x)
         return x
 

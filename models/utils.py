@@ -17,7 +17,7 @@ def smooth_predictions(preds, window=7, mode='median'):
     elif mode == 'wiener':
         return np.apply_along_axis(lambda x: wiener(x, window), 0, preds)
 
-    
+
 def plot_results(y1, y2, index):
     X = np.arange(len(Y1))
     plt.plot(X, Y1, label="Actual " + index)
