@@ -78,6 +78,7 @@ class AffWild2VA(pl.LightningModule):
         all_mse_a = mse(all_a_pred, all_a_gt)
 
         return {
+            'val_loss': 1 - 0.5 * (all_ccc_v + all_ccc_a),
             'progress_bar': {
                 'val_ccc_v': all_ccc_v,
                 'val_ccc_a': all_ccc_a
