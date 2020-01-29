@@ -20,8 +20,8 @@ def smooth_predictions(preds, window=7, mode='median'):
 
 def plot_results(y1, y2, index):
     X = np.arange(len(Y1))
-    plt.plot(X, Y1, label="Actual " + index)
-    plt.plot(X, Y2, label="Predicted " + index)
+    plt.plot(X, y1, label="Actual " + index)
+    plt.plot(X, y2, label="Predicted " + index)
     plt.xlabel('Frames') 
     # naming the y axis 
     plt.ylabel(index) 
