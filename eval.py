@@ -8,8 +8,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main(hparams):
     # init module
-    model = AffWild2VA(hparams)
-    model = model.load_from_checkpoint(hparams.checkpoint)
+    model = AffWild2VA(hparams).load_from_checkpoint(hparams.checkpoint)
 
     trainer = Trainer(
         gpus=hparams.gpus,
