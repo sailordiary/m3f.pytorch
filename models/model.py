@@ -17,11 +17,24 @@ class AffWild2VA(pl.LightningModule):
         super(AffWild2VA, self).__init__()
         self.hparams = hparams
         if self.hparams.backbone == 'resnet':
-            self.net = VA_3DResNet(resnet_ver='v1')
+            self.net = VA_3DResNet(
+                hiddenDim=self.hparams.num_hidden,
+                frameLen=self.hparams.window,
+                backend=self.hparams.backend,
+                resnet_ver='v1'
+            )
         elif self.hparams.backbone == 'v2p':
-            self.net = VA_3DVGGM()
+            self.net = VA_3DVGGM(
+                hiddenDim=self.hparams.num_hidden,
+                frameLen=self.hparams.window,
+                backend=self.hparams.backend
+            )
         elif self.hparams.backbone == 'densenet':
-            self.net = VA_3DDenseNet()
+            self.net = VA_3DDenseNet(
+                hiddenDim=self.hparams.num_hidden,
+                frameLen=self.hparams.window,
+                backend=self.hparams.backend
+            )
         
     def forward(self, x):
         # normalize to [-1, 1]
@@ -197,12 +210,16 @@ class AffWild2VA(pl.LightningModule):
         # MODEL specific
         parser = ArgumentParser(parents=[parent_parser])
         parser.add_argument('--backbone', default='resnet', type=str)
+        parser.add_argument('--backend', default='gru', type=str)
+
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=16, type=int)
         parser.add_argument('--windows_per_epoch', default=200, type=int)
         parser.add_argument('--learning_rate', default=0.0003, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
+
+        parser.add_argument('--num_hidden', default=512, type=int)
 
         # training specific (for this model)
         parser.add_argument('--distributed', action='store_true', default=False)

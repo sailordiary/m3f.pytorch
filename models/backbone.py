@@ -144,7 +144,7 @@ class VA_3DResNet(nn.Module):
 
 
 class VA_3DDenseNet(nn.Module):
-    def __init__(self, inputDim=256, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', frontend_agg_mode='ap'):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', frontend_agg_mode='ap'):
         super(VA_3DDenseNet, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
