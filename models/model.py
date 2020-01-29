@@ -82,10 +82,10 @@ class AffWild2VA(pl.LightningModule):
         }
 
     def validation_end(self, outputs):
-        all_v_gt = torch.cat([x['v_gt'].cpu() for x in outputs])
-        all_a_gt = torch.cat([x['a_gt'].cpu() for x in outputs])
-        all_v_pred = torch.cat([x['v_pred'].cpu() for x in outputs])
-        all_a_pred = torch.cat([x['a_pred'].cpu() for x in outputs])
+        all_v_gt = torch.cat([x['v_gt'] for x in outputs])
+        all_a_gt = torch.cat([x['a_gt'] for x in outputs])
+        all_v_pred = torch.cat([x['v_pred'] for x in outputs])
+        all_a_pred = torch.cat([x['a_pred'] for x in outputs])
 
         all_ccc_v = concordance_cc2(all_v_gt, all_v_pred)
         all_ccc_a = concordance_cc2(all_a_gt, all_a_pred)
@@ -98,13 +98,14 @@ class AffWild2VA(pl.LightningModule):
             # gather batch elements by file name
             for vid_name, st_frame, v_gt, a_gt, v_pred, a_pred in zip(x['vid_names'], x['start_frames'], x['v_gt'], x['a_gt'], x['v_pred'], x['a_pred']):
                 if vid_name in predictions.keys():
-                    predictions[vid_name].append((st_frame, v_gt, a_gt, v_pred, a_pred))
+                    predictions[vid_name].append((st_frame, v_gt.cpu(), a_gt.cpu(), v_pred.cpu(), a_pred.cpu()))
                 else:
-                    predictions[vid_name] = [(st_frame, v_gt, a_gt, v_pred, a_pred)]
+                    predictions[vid_name] = [(st_frame, v_gt.cpu(), a_gt.cpu(), v_pred.cpu(), a_pred.cpu())]
         pred_v, pred_a, gt_v, gt_a = {}, {}, {}, {}
         for k, w in predictions.items():
             # sort segment predictions by start frame index
             sorted_preds = sorted(w)
+            print (sorted_preds)
             gt_v[k] = torch.cat([x[1] for x in sorted_preds])
             gt_a[k] = torch.cat([x[2] for x in sorted_preds])
             pred_v[k] = torch.cat([x[3] for x in sorted_preds])
