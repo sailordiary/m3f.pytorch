@@ -118,7 +118,7 @@ class AffWild2VA(pl.LightningModule):
         return {
             'v_pred': v_hat, 'a_pred': a_hat,
             'vid_names': batch['vid_name'],
-            'start_frames': batch['start_frame']
+            'start_frames': batch['start']
         }
 
     def test_end(self, outputs):
