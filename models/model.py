@@ -63,7 +63,7 @@ class AffWild2VA(pl.LightningModule):
         
         x = batch['video']
         y_hat = self.forward(x)
-        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
+        valence_hat, arousal_hat = y_hat[..., 0].cpu(), y_hat[..., 1].cpu()
         lens = batch['length']
 
         v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
@@ -76,7 +76,9 @@ class AffWild2VA(pl.LightningModule):
 
         return {
             'v_gt': torch.cat(v), 'a_gt': torch.cat(a),
-            'v_pred': torch.cat(v_hat), 'a_pred': torch.cat(a_hat)
+            'v_pred': torch.cat(v_hat), 'a_pred': torch.cat(a_hat),
+            'vid_names': batch['vid_name'],
+            'start_frames': batch['start']
         }
 
     def validation_end(self, outputs):
@@ -89,6 +91,30 @@ class AffWild2VA(pl.LightningModule):
         all_ccc_a = concordance_cc2(all_a_gt, all_a_pred)
         all_mse_v = mse(all_v_pred, all_v_gt)
         all_mse_a = mse(all_a_pred, all_a_gt)
+
+        # save outputs for visualisation
+        predictions = {}
+        for x in outputs:
+            # gather batch elements by file name
+            for vid_name, st_frame, v_gt, a_gt, v_pred, a_pred in zip(x['vid_names'], x['start_frames'], x['gt'], x['gt'], x['v_pred'], x['a_pred']):
+                if vid_name in predictions.keys():
+                    predictions[vid_name].append((st_frame, v_gt, a_gt, v_pred, a_pred))
+                else:
+                    predictions[vid_name] = [(st_frame, v_gt, a_gt, v_pred, a_pred)]
+        pred_v, pred_a, gt_v, gt_a = {}, {}, {}, {}
+        for k, w in predictions.items():
+            # sort segment predictions by start frame index
+            sorted_preds = sorted(w)
+            gt_v[k] = torch.cat([x[1] for x in sorted_preds])
+            gt_a[k] = torch.cat([x[2] for x in sorted_preds])
+            pred_v[k] = torch.cat([x[3] for x in sorted_preds])
+            pred_a[k] = torch.cat([x[4] for x in sorted_preds])
+        torch.save({
+            'valence_gt': gt_v,
+            'arousal_gt': gt_a,
+            'valence_pred': pred_v,
+            'arousal_pred': pred_a
+        }, 'predictions_val.pt')
 
         return {
             'val_loss': 1 - 0.5 * (all_ccc_v + all_ccc_a),
@@ -130,26 +156,21 @@ class AffWild2VA(pl.LightningModule):
                     predictions[vid_name].append((st_frame, v, a))
                 else:
                     predictions[vid_name] = [(st_frame, v, a)]
-        final_predictions_v = {}
-        final_predictions_a = {}
+        pred_v, pred_a = {}, {}
         for k, w in predictions.items():
             # sort segment predictions by start frame index
             sorted_preds = sorted(w)
-            pred_v = torch.cat([x[1] for x in sorted_preds])
-            pred_a = torch.cat([x[2] for x in sorted_preds])
-            final_predictions_v[k] = pred_v
-            final_predictions_a[k] = pred_a
+            pred_v[k] = torch.cat([x[1] for x in sorted_preds])
+            pred_a[k] = torch.cat([x[2] for x in sorted_preds])
         # save predictions for further ensembling
         torch.save({
-            'valence': final_predictions_v,
-            'arousal': final_predictions_a
-        }, 'predictions.pt')
+            'valence_pred': pred_v,
+            'arousal_pred': pred_a
+        }, 'predictions_test.pt')
         
         return {}
 
     def configure_optimizers(self):
-        # REQUIRED
-        # can return multiple optimizers and learning_rate schedulers
         if self.hparams.optimizer == 'adam':
             optimizer = torch.optim.Adam(self.parameters(),
                                          lr=self.hparams.learning_rate,

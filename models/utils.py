@@ -25,6 +25,6 @@ def plot_results(y1, y2, index):
     plt.xlabel('Frames') 
     # naming the y axis 
     plt.ylabel(index) 
-    plt.title("Aff-Wild2")
+    plt.title("Aff-Wild2 predictions")
     plt.legend()
     plt.show() 
