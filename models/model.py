@@ -77,7 +77,7 @@ class AffWild2VA(pl.LightningModule):
         return {
             'v_gt': torch.cat(v).cpu(), 'a_gt': torch.cat(a).cpu(),
             'v_pred': torch.cat(v_hat).cpu(), 'a_pred': torch.cat(a_hat).cpu(),
-            'vid_names': batch['vid_name'].cpu(),
+            'vid_names': batch['vid_name'],
             'start_frames': batch['start'].cpu()
         }
 
@@ -144,7 +144,7 @@ class AffWild2VA(pl.LightningModule):
         
         return {
             'v_pred': v_hat, 'a_pred': a_hat,
-            'vid_names': batch['vid_name'].cpu(),
+            'vid_names': batch['vid_name'],
             'start_frames': batch['start'].cpu()
         }
 
