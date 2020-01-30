@@ -35,7 +35,7 @@ class AffWild2VA(pl.LightningModule):
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend
             )
-        
+
     def forward(self, x):
         # normalize to [-1, 1]
         x = (x - 127.5) / 127.5
@@ -44,13 +44,19 @@ class AffWild2VA(pl.LightningModule):
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat, y)
     
+    def ce_loss(self, y_hat, y):
+        return F.binary_cross_entropy(y_hat, y)
+    
+    def mse_loss(self, y_hat, y):
+        return F.mse_loss(y_hat, y)
+    
     def training_step(self, batch, batch_idx):
         x = batch['video']
         valence, arousal = batch['label_valence'], batch['label_arousal']
         y_hat = self.forward(x)
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
-        loss_v = self.ccc_loss(valence.view(-1), valence_hat.view(-1))
-        loss_a = self.ccc_loss(arousal.view(-1), arousal_hat.view(-1))
+        loss_v = self.ccc_loss(valence, valence_hat)
+        loss_a = self.ccc_loss(arousal, arousal_hat)
         loss = 0.5 * loss_v + 0.5 * loss_a
         return {
             'loss': loss,

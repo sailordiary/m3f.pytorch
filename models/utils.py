@@ -3,9 +3,18 @@ from scipy.signal import medfilt, wiener
 from matplotlib import pyplot as plt
 
 
-def concordance_cc2(r1, r2):
-     mean_cent_prod = ((r1 - r1.mean()) * (r2 - r2.mean())).mean()
-     return (2 * mean_cent_prod) / (r1.var() + r2.var() + (r1.mean() - r2.mean()) ** 2)
+def concordance_cc2(r1, r2, reduction='mean'):
+    '''
+    Computes batch element-wise CCC.
+    '''
+    r1_mean = r1.mean(dim=-1, keepdims=True)
+    r2_mean = r2.mean(dim=-1, keepdims=True)
+    mean_cent_prod = ((r1 - r1_mean * (r2 - r2_mean))).mean(dim=-1, keepdims=True)
+    ccc = (2 * mean_cent_prod) / (r1.var(dim=-1, keepdims=True) + r2.var(dim=-1, keepdims=True) + (r1_mean - r2_mean) ** 2)
+    if reduction == 'none':
+        return ccc
+    elif reduction == 'mean':
+        return ccc.mean()
 
 
 def mse(preds, labels):
