@@ -12,7 +12,7 @@ from models.utils import smooth_predictions
 
 
 def run_ensemble(eval_list, score_list):
-    os.makedirs('ensembled_predictions', exist_ok=True)
+    os.makedirs('VA-Track', exist_ok=True)
     video_names = open(eval_list.name, 'r').read().splitlines()
     video_scores = {k: {'valence': None, 'arousal': None} for k in video_names}
     score_names = open(score_list.name, 'r').read().splitlines()
@@ -28,7 +28,7 @@ def run_ensemble(eval_list, score_list):
                 video_scores[video_name]['valence'] += scores['valence_pred'][video_name]
                 video_scores[video_name]['arousal'] += scores['arousal_pred'][video_name]
     for video_name in tqdm(video_names):
-        with open(os.path.join('ensembled_predictions', video_name + '.txt'), 'w') as fp:
+        with open(os.path.join('VA-Track', video_name + '.txt'), 'w') as fp:
             valence = video_scores[video_name]['valence'].numpy() / nb_scores
             arousal = video_scores[video_name]['valence'].numpy() / nb_scores
             valence = smooth_predictions(valence)
