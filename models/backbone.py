@@ -13,7 +13,7 @@ from .rnn import GRU
 
 
 class VA_VGGFace(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', norm_layer='bn'):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru'):
         super(VA_VGGFace, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
