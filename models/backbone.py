@@ -8,7 +8,42 @@ import torch.nn.functional as F
 
 from .resnet import ResNet, ResNetV2, BasicBlock, BasicBlockV2
 from .densenet import DenseNet52_3D
+from .vggface import VGGFace
 from .rnn import GRU
+
+
+class VA_VGGFace(nn.Module):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', norm_layer='bn'):
+        super(VA_VGGFace, self).__init__()
+        self.inputDim = inputDim
+        self.hiddenDim = hiddenDim
+        self.nClasses = nClasses
+        self.frameLen = frameLen
+        self.nLayers = nLayers
+        self.backend = backend
+        
+        self.vgg = VGGFace()
+
+    # backend
+        if self.backend == 'gru':
+            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
+
+        # initialize
+        self._initialize_weights()
+
+    def forward(self, x):
+        x = self.v2p(x)
+        x = x.squeeze().transpose(1, 2)
+        if self.backend == 'gru':
+            x = self.gru(x)
+        return x
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.xavier_normal_(m.weight.data)
+                if m.bias is not None:
+                    nn.init.xavier_normal_(m.bias.data)
 
 
 class VA_3DVGGM(nn.Module):

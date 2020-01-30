@@ -35,6 +35,12 @@ class AffWild2VA(pl.LightningModule):
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend
             )
+        elif self.hparams.backbone == 'vggface':
+            self.visual = VA_VGGFace(
+                hiddenDim=self.hparams.num_hidden,
+                frameLen=self.hparams.window,
+                backend=self.hparams.backend
+            )
 
     def forward(self, x):
         # normalize to [-1, 1]
