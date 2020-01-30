@@ -3,6 +3,8 @@ import os
 import time
 import logging
 
+from tqdm import tqdm
+
 import torch
 import numpy as np
 
@@ -11,22 +13,22 @@ from models.utils import smooth_predictions
 
 def run_ensemble(eval_list, score_list):
     os.makedirs('ensembled_predictions', exist_ok=True)
-    video_names = open(eval_list, 'r').read().splitlines()
+    video_names = open(eval_list.name, 'r').read().splitlines()
     video_scores = {k: {'valence': None, 'arousal': None} for k in video_names}
-    score_names = open(score_list, 'r').read().splitlines()
+    score_names = open(score_list.name, 'r').read().splitlines()
     nb_scores = len(score_names)
     for i, fname in enumerate(score_names):
         scores = torch.load(fname)
         if i == 0:
             for video_name in video_names:
-                video_scores[video_name]['valence'] = scores['valence_pred']
-                video_scores[video_name]['arousal'] = scores['arousal_pred']
+                video_scores[video_name]['valence'] = scores['valence_pred'][video_name]
+                video_scores[video_name]['arousal'] = scores['arousal_pred'][video_name]
         else:
             for video_name in video_names:
-                video_scores[video_name]['valence'] += scores['valence_pred']
-                video_scores[video_name]['arousal'] += scores['arousal_pred']
-    for video_name in enumerate(video_names):
-        with open(os.path.join('ensembled_predictions', video_name + '.txt')) as fp:
+                video_scores[video_name]['valence'] += scores['valence_pred'][video_name]
+                video_scores[video_name]['arousal'] += scores['arousal_pred'][video_name]
+    for video_name in tqdm(video_names):
+        with open(os.path.join('ensembled_predictions', video_name + '.txt'), 'w') as fp:
             valence = video_scores[video_name]['valence'].numpy() / nb_scores
             arousal = video_scores[video_name]['valence'].numpy() / nb_scores
             valence = smooth_predictions(valence)
@@ -43,13 +45,13 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-l",
-        "--list",
+        "--eval_list",
         help="Text file containing names of videos to be evaluated on.",
         type=argparse.FileType("r"),
         required=True)
     parser.add_argument(
         "-s",
-        "--scores",
+        "--score_list",
         help="Text file containing paths of input prediction .pt files.",
         type=argparse.FileType("r"),
         required=True)
