@@ -3,6 +3,9 @@ lightning_logs
 *.pt
 *.pth
 
+# Outputs
+ensembled_predictions
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
