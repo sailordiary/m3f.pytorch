@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 def concordance_cc2(r1, r2, reduction='mean'):
     '''
-    Computes batch element-wise CCC.
+    Computes row-wise CCC.
     '''
     r1_mean = r1.mean(dim=-1, keepdims=True)
     r2_mean = r2.mean(dim=-1, keepdims=True)
