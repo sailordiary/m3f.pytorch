@@ -1,10 +1,9 @@
 # PyTorch
-lightning_logs
 *.pt
 *.pth
 
 # Outputs
-ensembled_predictions
+ensembled_predictions/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -34,6 +33,7 @@ wheels/
 MANIFEST
 
 # Lightning /research  
+lightning_logs/
 test_tube_exp/
 tests/tests_tt_dir/
 tests/save_dir
