@@ -164,7 +164,7 @@ class VA_3DDenseNet(nn.Module):
         self.densenet = DenseNet52_3D(self.inputDim, agg_mode=frontend_agg_mode, fmap_out_size=final_fmap_size)
         # backend
         if self.backend == 'gru':
-            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.every_frame)
+            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
 
         # initialize
         self._initialize_weights()
