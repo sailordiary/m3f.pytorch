@@ -17,20 +17,20 @@ class AffWild2VA(pl.LightningModule):
         super(AffWild2VA, self).__init__()
         self.hparams = hparams
         if self.hparams.backbone == 'resnet':
-            self.net = VA_3DResNet(
+            self.visual = VA_3DResNet(
                 hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend,
                 resnet_ver='v1'
             )
         elif self.hparams.backbone == 'v2p':
-            self.net = VA_3DVGGM(
+            self.visual = VA_3DVGGM(
                 hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend
             )
         elif self.hparams.backbone == 'densenet':
-            self.net = VA_3DDenseNet(
+            self.visual = VA_3DDenseNet(
                 hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend
