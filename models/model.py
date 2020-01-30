@@ -91,6 +91,8 @@ class AffWild2VA(pl.LightningModule):
         all_mse_v = mse(all_v_pred, all_v_gt)
         all_mse_a = mse(all_a_pred, all_a_gt)
 
+        val_loss = 1 - 0.5 * (all_ccc_v + all_ccc_a)
+
         # save outputs for visualisation
         predictions = {}
         for x in outputs:
@@ -116,7 +118,7 @@ class AffWild2VA(pl.LightningModule):
         }, 'predictions_val.pt')
 
         return {
-            'val_loss': 1 - 0.5 * (all_ccc_v + all_ccc_a),
+            'val_loss': val_loss,
             'progress_bar': {
                 'val_ccc_v': all_ccc_v,
                 'val_ccc_a': all_ccc_a
@@ -125,7 +127,8 @@ class AffWild2VA(pl.LightningModule):
                 'val_ccc_v': all_ccc_v,
                 'val_ccc_a': all_ccc_a,
                 'val_mse_v': all_mse_v,
-                'val_mse_a': all_mse_a
+                'val_mse_a': all_mse_a,
+                'val_loss': val_loss
             }
         }
     
