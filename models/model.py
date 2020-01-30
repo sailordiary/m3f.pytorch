@@ -44,8 +44,8 @@ class AffWild2VA(pl.LightningModule):
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
     
-    def ce_loss(self, y_hat, y):
-        return F.binary_cross_entropy(y_hat.view(-1), y.view(-1))
+    def bce_loss(self, y_hat, y):
+        return F.binary_cross_entropy_with_logits(y_hat.view(-1), y.view(-1))
     
     def mse_loss(self, y_hat, y):
         return F.mse_loss(y_hat, y)
@@ -55,7 +55,7 @@ class AffWild2VA(pl.LightningModule):
         valence, arousal = batch['label_valence'], batch['label_arousal']
         y_hat = self.forward(x)
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
-        loss_v = self.ccc_loss(valence_hat, valence) + self.ce_loss(valence_hat, valence)
+        loss_v = self.ccc_loss(valence_hat, valence) + self.bce_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = 0.5 * loss_v + 0.5 * loss_a
         return {
