@@ -3,8 +3,11 @@ import os
 import math
 import random
 
+from tqdm import tqdm
+
 import numpy as np
 import cv2
+import pickle
 
 import torch
 from torch.utils.data import Dataset
@@ -28,15 +31,15 @@ def sequence_cutout(seq, n_holes=1, fill_value=127.5):
     return seq
 
 
-def check_missing_percentage(fold, start, length):
-    nb_missing = 0
-    for i in range(start, start + length):
-        p = os.path.join(fold, '{:05d}.jpg'.format(i + 1))
-        if not os.path.exists(p):
-            nb_missing += 1
-            # we do not tolerate missing frames at the beginning
-            if i == start: return 1.0
-    return nb_missing / length
+# find consecutive "True"s in a 1D array
+def one_runs(a):
+    # Create an array that is 1 where a is 1, and pad each end with an extra 0.
+    iszero = np.concatenate(([0], np.equal(a, 1).view(np.int8), [0]))
+    absdiff = np.abs(np.diff(iszero))
+    # Runs start and end where absdiff is 1.
+    ranges = np.where(absdiff == 1)[0].reshape(-1, 2)
+
+    return ranges
 
 
 def load_video(path, start, length,
@@ -103,7 +106,6 @@ class AffWild2iBugSequenceDataset(Dataset):
             self.sample_src = list(range(num_files)) * self.windows_per_epoch
             random.shuffle(self.sample_src)
         else:
-            # TODO(yuanhang): implemented strided inference
             # non-overlapped inference (stride=window_len)
             self.sample_src = []
             for i, vid_name in enumerate(self.files):
@@ -117,15 +119,31 @@ class AffWild2iBugSequenceDataset(Dataset):
                 # valence, arousal
                 lines = open(os.path.join(self.path, 'annotation', self.split, vid_name + '.txt'), 'r').read().splitlines()
                 self.labels[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
+        if self.split == 'train':
+            self.avail_windows = self.get_available_windows()
+    
+    def get_available_windows(self):
+        windows = {k: [] for k in self.files}
+        cache_path = 'ibug_{}_window{}.pkl'.format(self.split, self.window_len)
+        if os.path.exists(cache_path):
+            return pickle.load(open(cache_path, 'rb'))
+        for vid_name in tqdm(self.files, desc='Scanning available windows'):
+            src_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
+            has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels[vid_name]))])
+            has_label = np.abs(self.labels[vid_name]) <= 1
+            avail_ranges = one_runs(has_image & has_label)
+            for w_st, w_ed in avail_ranges:
+                windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
+            assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
+        pickle.dump(windows, open(cache_path, 'wb'))
+        return windows
 
     def __getitem__(self, i):
         if self.split == 'train':
             vid_idx = self.sample_src[i]
             vid_name = self.files[vid_idx]
             track_len = self.window_len
-            # TODO(yuanhang): maybe not all videos start from frame 0,
-            # e.g. a person entering halfway. Should double-check this later.
-            start_frame = random.randint(0, self.nb_frames[vid_name] - self.window_len)
+            start_frame = random.choice(self.avail_windows[vid_name])
         else:
             vid_idx, start_frame = self.sample_src[i]
             vid_name = self.files[vid_idx]

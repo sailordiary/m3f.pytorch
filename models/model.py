@@ -86,10 +86,11 @@ class AffWild2VA(pl.LightningModule):
         all_v_pred = torch.cat([torch.cat(x['v_pred']) for x in outputs])
         all_a_pred = torch.cat([torch.cat(x['a_pred']) for x in outputs])
 
-        all_ccc_v = concordance_cc2(all_v_gt, all_v_pred)
-        all_ccc_a = concordance_cc2(all_a_gt, all_a_pred)
-        all_mse_v = mse(all_v_pred, all_v_gt)
-        all_mse_a = mse(all_a_pred, all_a_gt)
+        is_valid = (torch.abs(all_v_gt) <= 1) & (torch.abs(all_a_gt) <= 1)
+        all_ccc_v = concordance_cc2(all_v_gt[is_valid], all_v_pred[is_valid])
+        all_ccc_a = concordance_cc2(all_a_gt[is_valid], all_a_pred[is_valid])
+        all_mse_v = mse(all_v_pred[is_valid], all_v_gt[is_valid])
+        all_mse_a = mse(all_a_pred[is_valid], all_a_gt[is_valid])
 
         val_loss = 1 - 0.5 * (all_ccc_v + all_ccc_a)
 
