@@ -39,7 +39,7 @@ class AffWild2VA(pl.LightningModule):
     def forward(self, x):
         # normalize to [-1, 1]
         x = (x - 127.5) / 127.5
-        return self.net(x)
+        return self.visual(x)
     
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
