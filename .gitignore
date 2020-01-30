@@ -1,6 +1,7 @@
 # PyTorch
 *.pt
 *.pth
+*.pkl
 
 # Outputs
 ensembled_predictions/

@@ -130,10 +130,11 @@ class AffWild2iBugSequenceDataset(Dataset):
         for vid_name in tqdm(self.files, desc='Scanning available windows'):
             src_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
             has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels[vid_name]))])
-            has_label = np.abs(self.labels[vid_name]) <= 1
+            has_label = np.max(np.abs(self.labels[vid_name]), axis=1) <= 1
             avail_ranges = one_runs(has_image & has_label)
             for w_st, w_ed in avail_ranges:
                 windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
+            # we're up all night to get lucky :(
             assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
         pickle.dump(windows, open(cache_path, 'wb'))
         return windows
@@ -149,21 +150,10 @@ class AffWild2iBugSequenceDataset(Dataset):
             vid_name = self.files[vid_idx]
             track_len = min(self.window_len, self.nb_frames[vid_name] - start_frame)
         
-        src_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
-        if self.split == 'train':
-            # TODO(yuanhang): for now just checking if we got really unlucky
-            # not doing the same for val and test, which is probably a bad idea
-            # should revise the data
-            retry_times = 0
-            while check_missing_percentage(src_fold, start_frame, track_len) >= 0.25:
-                start_frame = random.randint(0, self.nb_frames[vid_name] - self.window_len)
-                retry_times += 1
-                # we're up all night to get lucky :(
-                if retry_times == 3: break
-        
         # note that frame index begins with 1
         cutout_augment = self.split == 'train' and self.apply_cutout
         mirror_augment = self.split == 'train' and random.random() > 0.5
+        src_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
         inputs = load_video(src_fold, start_frame, track_len,
                             mirror_augment, False, cutout_augment)
         
