@@ -42,7 +42,7 @@ class AffWild2VA(pl.LightningModule):
         return self.net(x)
     
     def ccc_loss(self, y_hat, y):
-        return 1 - concordance_cc2(y_hat, y)
+        return (1 - concordance_cc2(y_hat, y, reduction='none')).mean()
     
     def ce_loss(self, y_hat, y):
         return F.binary_cross_entropy(y_hat, y)
