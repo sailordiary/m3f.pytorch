@@ -23,7 +23,6 @@ class VGGFace(nn.Module):
         x = self.conv4(x)
         x = self.conv5(x)
         x = x.view(x.size(0), -1)
-        print (x.size())
         x = self.dropout(F.relu(self.fc1(x)))
         return x
 
@@ -48,4 +47,3 @@ class _ConvBlock(torch.nn.Module):
         for c in self.convs:
             x = F.relu(c(x))
         return F.max_pool2d(x, 2, 2, 0, ceil_mode=True)
-

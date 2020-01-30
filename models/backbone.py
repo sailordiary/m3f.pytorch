@@ -24,7 +24,7 @@ class VA_VGGFace(nn.Module):
         
         self.vgg = VGGFace()
 
-    # backend
+        # backend
         if self.backend == 'gru':
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
 
