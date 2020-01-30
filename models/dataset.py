@@ -133,13 +133,14 @@ class AffWild2iBugSequenceDataset(Dataset):
         
         src_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
         if self.split == 'train':
-            # TODO(yuanhang): for now just checking if we got really unlucky :(
+            # TODO(yuanhang): for now just checking if we got really unlucky
             # not doing the same for val and test, which is probably a bad idea
+            # should revise the data
             retry_times = 0
             while check_missing_percentage(src_fold, start_frame, track_len) >= 0.25:
                 start_frame = random.randint(0, self.nb_frames[vid_name] - self.window_len)
                 retry_times += 1
-                # just give up... we don't have forever
+                # we're up all night to get lucky :(
                 if retry_times == 3: break
         
         # note that frame index begins with 1
