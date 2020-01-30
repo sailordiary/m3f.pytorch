@@ -72,12 +72,13 @@ class AffWild2VA(pl.LightningModule):
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
         lens = batch['length']
 
-        v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
-        a_hat.extend([arousal_hat[i][: lens[i]] for i in range(lens.size(0))])
+        bs = lens.size(0)
+        v_hat.extend([valence_hat[i][: lens[i]] for i in range(bs)])
+        a_hat.extend([arousal_hat[i][: lens[i]] for i in range(bs)])
         
         valence, arousal = batch['label_valence'].cpu(), batch['label_arousal'].cpu()
-        v.extend([valence[i][: lens[i]] for i in range(lens.size(0))])
-        a.extend([arousal[i][: lens[i]] for i in range(lens.size(0))])
+        v.extend([valence[i][: lens[i]] for i in range(bs)])
+        a.extend([arousal[i][: lens[i]] for i in range(bs)])
 
         return {
             'v_gt': v, 'a_gt': a,
@@ -147,8 +148,9 @@ class AffWild2VA(pl.LightningModule):
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
         lens = batch['length']
 
-        v_hat.extend([valence_hat[i][: lens[i]] for i in range(lens.size(0))])
-        a_hat.extend([arousal_hat[i][: lens[i]] for i in range(lens.size(0))])
+        bs = lens.size(0)
+        v_hat.extend([valence_hat[i][: lens[i]] for i in range(bs)])
+        a_hat.extend([arousal_hat[i][: lens[i]] for i in range(bs)])
         
         return {
             'v_pred': v_hat, 'a_pred': a_hat,
