@@ -55,7 +55,7 @@ class AffWild2VA(pl.LightningModule):
         valence, arousal = batch['label_valence'], batch['label_arousal']
         y_hat = self.forward(x)
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
-        loss_v = self.ccc_loss(valence_hat, valence) + self.bce_loss(valence_hat, valence)
+        loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = 0.5 * loss_v + 0.5 * loss_a
         return {
