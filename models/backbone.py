@@ -32,8 +32,11 @@ class VA_VGGFace(nn.Module):
         self._initialize_weights()
 
     def forward(self, x):
-        x = self.v2p(x)
-        x = x.squeeze().transpose(1, 2)
+        b = x.size(0)
+        x = x.transpose(1, 2).contiguous()
+        x = x.view(-1, x.size(2), x.size(3), x.size(4))
+        x = self.vgg(x)
+        x = x.view(b, -1, x.size(1))
         if self.backend == 'gru':
             x = self.gru(x)
         return x
@@ -43,7 +46,7 @@ class VA_VGGFace(nn.Module):
             if isinstance(m, nn.Conv2d):
                 nn.init.xavier_normal_(m.weight.data)
                 if m.bias is not None:
-                    nn.init.xavier_normal_(m.bias.data)
+                    nn.init.normal_(m.bias.data)
 
 
 class VA_3DVGGM(nn.Module):
