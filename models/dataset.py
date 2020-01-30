@@ -32,6 +32,7 @@ def sequence_cutout(seq, n_holes=1, fill_value=127.5):
 
 
 # find consecutive "True"s in a 1D array
+# https://stackoverflow.com/questions/24885092/finding-the-consecutive-zeros-in-a-numpy-array/24892274#24892274
 def one_runs(a):
     # Create an array that is 1 where a is 1, and pad each end with an extra 0.
     iszero = np.concatenate(([0], np.equal(a, 1).view(np.int8), [0]))
@@ -50,11 +51,8 @@ def load_video(path, start, length,
     if os.path.isdir(path):
         for i in range(start, start + length):
             img = cv2.imread(os.path.join(path, '{:05d}.jpg'.format(i + 1)))
-            # assert img is not None, 'exception: {}, start={}, length={}'.format(path, start, length)
-            # TODO(yuanhang): for now, fill in the missing frames
-            # with a previous frame or zeros
+            # fill in the missing frames with a previous frame or zeros
             if img is None:
-                # print (os.path.join(path, '{:05d}.jpg'.format(i + 1)))
                 if len(frames) > 0: img = frames[-1]
                 else: img = np.zeros((112, 112, 3), dtype=np.uint8)
             if crop_augment: pass # TODO: implement random crop
@@ -112,7 +110,6 @@ class AffWild2iBugSequenceDataset(Dataset):
                 # pairs of (video_idx, window_start)
                 for j in range(self.nb_frames[vid_name] // self.window_len):
                     self.sample_src.append((i, j * self.window_len))
-        print ('Loaded partition {}: {} files, {} windows'.format(self.split, len(self.files), len(self.sample_src)))
         if self.split != 'test':
             self.labels = {}
             for vid_name in self.files:
@@ -121,6 +118,8 @@ class AffWild2iBugSequenceDataset(Dataset):
                 self.labels[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
         if self.split == 'train':
             self.avail_windows = self.get_available_windows()
+        
+        print ('Loaded partition {}: {} files, {} windows'.format(self.split, len(self.files), len(self.sample_src)))
     
     def get_available_windows(self):
         windows = {k: [] for k in self.files}
