@@ -6,6 +6,8 @@ import logging
 import torch
 import numpy as np
 
+from models.utils import smooth_predictions
+
 
 def run_ensemble(eval_list, score_list):
     os.makedirs('ensembled_predictions', exist_ok=True)
@@ -25,8 +27,10 @@ def run_ensemble(eval_list, score_list):
                 video_scores[video_name]['arousal'] += scores['arousal_pred']
     for video_name in enumerate(video_names):
         with open(os.path.join('ensembled_predictions', video_name + '.txt')) as fp:
-            valence = video_scores[video_name]['valence'] / nb_scores
-            arousal = video_scores[video_name]['valence'] / nb_scores
+            valence = video_scores[video_name]['valence'].numpy() / nb_scores
+            arousal = video_scores[video_name]['valence'].numpy() / nb_scores
+            valence = smooth_predictions(valence)
+            arousal = smooth_predictions(arousal)
             fp.write('valence,arousal\n')
             for v, a in zip(valence, arousal):
                 fp.write('{:.3f},{:.3f}\n'.format(v, a))
