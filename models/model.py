@@ -45,7 +45,7 @@ class AffWild2VA(pl.LightningModule):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
     
     def ce_loss(self, y_hat, y):
-        return F.binary_cross_entropy(y_hat, y)
+        return F.binary_cross_entropy(y_hat.view(-1), y.view(-1))
     
     def mse_loss(self, y_hat, y):
         return F.mse_loss(y_hat, y)
