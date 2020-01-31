@@ -85,6 +85,7 @@ class AffWild2VA(pl.LightningModule):
             loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = 0.5 * loss_v + 0.5 * loss_a
+        
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         if self.hparams.valence_loss == 'softmax':
             max_class = torch.argmax(valence_hat, dim=-1)
@@ -279,7 +280,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=16, type=int)
         parser.add_argument('--windows_per_epoch', default=200, type=int)
-        parser.add_argument('--learning_rate', default=0.0003, type=float)
+        parser.add_argument('--learning_rate', default=0.0001, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
 
