@@ -1,3 +1,6 @@
+# coding=utf-8
+# Copyright 2020 Yuan-Hang Zhang.
+#
 from .dataset import AffWild2iBugSequenceDataset
 from .backbone import *
 from .utils import concordance_cc2, mse

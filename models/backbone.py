@@ -47,6 +47,9 @@ class VA_VGGFace(nn.Module):
                 nn.init.xavier_normal_(m.weight.data)
                 if m.bias is not None:
                     nn.init.normal_(m.bias.data)
+            elif isinstance(m, nn.Linear):
+                nn.init.xavier_normal_(m.weight)
+                nn.init.constant_(m.bias, 0)
 
 
 class VA_3DVGGM(nn.Module):
