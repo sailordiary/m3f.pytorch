@@ -27,7 +27,7 @@ class VGGFace(nn.Module):
         return x
 
 
-class _ConvBlock(torch.nn.Module):
+class _ConvBlock(nn.Module):
     """A Convolutional block."""
 
     def __init__(self, *units):
