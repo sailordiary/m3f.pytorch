@@ -85,9 +85,14 @@ class AffWild2VA(pl.LightningModule):
             loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = 0.5 * loss_v + 0.5 * loss_a
+        progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
+        if self.hparams.valence_loss == 'softmax':
+            max_class = torch.argmax(valence_hat, dim=-1)
+            correct = torch.sum(max_class.view(-1) == valence.view(-1)).item() / (valence.size(0) * valence.size(1))
+            progress_dict['acc_v'] = correct
         return {
             'loss': loss,
-            'progress_bar': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss},
+            'progress_bar': progress_dict,
             'log': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         }
 
