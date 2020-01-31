@@ -30,7 +30,8 @@ class AffWild2VA(pl.LightningModule):
             self.visual = VA_3DVGGM(
                 hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
-                backend=self.hparams.backend
+                backend=self.hparams.backend,
+                nClasses=9 if self.hparams.valence_loss == 'softmax' else 2
             )
         elif self.hparams.backbone == 'v2p_split':
             self.visual = VA_3DVGGM_Split(
@@ -63,15 +64,25 @@ class AffWild2VA(pl.LightningModule):
     def bce_loss(self, y_hat, y):
         return F.binary_cross_entropy_with_logits(y_hat.view(-1), (y.view(-1) > 0).float())
     
+    def ce_loss(self, y_hat, y):
+        return F.cross_entropy(y_hat.view(-1), y(-1))
+    
     def mse_loss(self, y_hat, y):
         return F.mse_loss(y_hat, y)
     
     def training_step(self, batch, batch_idx):
         x = batch['video']
-        valence, arousal = batch['label_valence'], batch['label_arousal']
+        arousal = batch['label_arousal']
+        
         y_hat = self.forward(x)
-        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
-        loss_v = self.ccc_loss(valence_hat, valence)
+        if self.params.valence_loss == 'softmax':
+            valence_hat, arousal_hat = y_hat[..., :8], y_hat[..., -1]
+            valence = batch['class_valence']
+            loss_v = self.ce_loss(valence_hat, valence)
+        elif self.params.valence_loss == 'ccc':
+            valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
+            valence = batch['label_valence']
+            loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = 0.5 * loss_v + 0.5 * loss_a
         return {
@@ -267,6 +278,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
 
+        parser.add_argument('--valence_loss', default='ccc', type=str)
         parser.add_argument('--num_hidden', default=512, type=int)
         parser.add_argument('--split_layer', default=5, type=int)
         parser.add_argument('--cutout', action='store_true', default=False)

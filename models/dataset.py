@@ -183,6 +183,10 @@ class AffWild2iBugSequenceDataset(Dataset):
         }
         if self.split != 'test':
             batch['label_valence'] = torch.from_numpy(labels[..., 0])
+            # discretize valence into categories
+            bins = np.linspace(-1, 1, 8, endpoint=False)
+            class_labels = np.digitize(labels[..., 0], bins) - 1
+            batch['class_valence'] = torch.from_numpy(class_labels)
             batch['label_arousal'] = torch.from_numpy(labels[..., 1])
         
         return batch
