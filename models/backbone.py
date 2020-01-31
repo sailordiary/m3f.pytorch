@@ -124,6 +124,111 @@ class VA_3DVGGM(nn.Module):
                 m.bias.data.zero_()
 
 
+class VA_3DVGGM_Split(nn.Module):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, backend='gru', norm_layer='bn', split_layer=5):
+        super(VA_3DVGGM_Split, self).__init__()
+        self.inputDim = inputDim
+        self.hiddenDim = hiddenDim
+        self.frameLen = frameLen
+        self.nLayers = nLayers
+        self.backend = backend
+        self.split_layer = split_layer
+        self.norm_layer = norm_layer
+
+        assert split_layer >= 2, 'degenerate multi-tower structure'
+        shared = [
+            nn.Conv3d(3, 64, 3, stride=(1,2,2), padding=(1,0,0)),
+            nn.BatchNorm3d(64) if norm_layer == 'bn' else nn.GroupNorm(32, 64),
+            nn.ReLU(True),
+            nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2))
+        ]
+        if self.split_layer != 5: v_private, a_private = [], []
+    
+        for i in range(2, 6):
+            if split_layer >= i: getattr(self, 'add_conv{}'.format(i))(shared)
+            else:
+                getattr(self, 'add_conv{}'.format(i))(v_private)
+                getattr(self, 'add_conv{}'.format(i))(a_private)
+        self.shared = nn.Sequential(*shared)
+        if self.split_layer != 5:
+            self.v_private = nn.Sequential(*v_private)
+            self.a_private = nn.Sequential(*a_private)
+       
+        # backend
+        if self.backend == 'gru':
+            if split_layer == 5:
+                self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, 2)
+            else:
+                self.gru_v = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1)
+                self.gru_a = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1)
+
+        # initialize
+        self._initialize_weights()
+    
+    def add_conv2(self, x):
+        x.extend([
+            nn.Conv3d(64, 128, 3, 1, padding=(1,0,0)),
+            nn.BatchNorm3d(128) if self.norm_layer == 'bn' else nn.GroupNorm(32, 128),
+            nn.ReLU(True),
+            nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2))
+        ])
+    
+    def add_conv3(self, x):
+        x.extend([
+            nn.Conv3d(128, 256, 3, 1, (1,0,0)),
+            nn.BatchNorm3d(256) if self.norm_layer == 'bn' else nn.GroupNorm(32, 256),
+            nn.ReLU(True),
+            nn.MaxPool3d(kernel_size=(1,2,2), stride=(1,2,2))
+        ])
+    
+    def add_conv4(self, x):
+        x.extend([
+            nn.Conv3d(256, 512, 3, 1, (1,0,0)),
+            nn.BatchNorm3d(512) if self.norm_layer == 'bn' else nn.GroupNorm(32, 512),
+            nn.ReLU(True)
+        ])
+    
+    def add_conv5(self, x):
+        x.extend([
+            nn.Conv3d(512, 512, 3, 1, (1,0,0)),
+            nn.BatchNorm3d(512) if self.norm_layer == 'bn' else nn.GroupNorm(32, 512),
+            nn.ReLU(True)
+        ])
+
+    def forward(self, x):
+        x = self.shared(x)
+        if self.split_layer != 5:
+            x_v = self.v_private(x)
+            x_a = self.a_private(x)
+            x_v = x_v.squeeze().transpose(1, 2)
+            x_a = x_a.squeeze().transpose(1, 2)
+            if self.backend == 'gru':
+                x_v = self.gru_v(x_v)
+                x_a = self.gru_a(x_a)
+                return torch.cat((x_v, x_a), dim=-1)
+        else:
+            x = x.squeeze().transpose(1, 2)
+            if self.backend == 'gru':
+                x = self.gru(x)
+            return x
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv3d):
+                n = m.kernel_size[0] * m.kernel_size[1] * m.kernel_size[2] * m.out_channels
+                m.weight.data.normal_(0, math.sqrt(2. / n))
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif isinstance(m, nn.Conv1d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm3d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+            elif isinstance(m, nn.BatchNorm1d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
+
+
 class VA_3DResNet(nn.Module):
     def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', use_cbam=False, resnet_ver='v2', resnet_depth=18, frontend_agg_mode='ap'):
         super(VA_3DResNet, self).__init__()

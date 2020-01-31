@@ -98,7 +98,7 @@ class AffWild2iBugSequenceDataset(Dataset):
         self.windows_per_epoch = windows_per_epoch
         self.apply_cutout = apply_cutout
         
-        nb_frames = [l.split(',') for l in open('splits/nb_frames.csv'), 'r').read().splitlines()]
+        nb_frames = [l.split(',') for l in open('splits/nb_frames.csv', 'r').read().splitlines()]
         self.nb_frames = {k: int(w) for k, w in nb_frames} # between 73 and 47419
         
         self.files = open('splits/{}.csv'.format(self.split), 'r').read().splitlines()
@@ -161,7 +161,7 @@ class AffWild2iBugSequenceDataset(Dataset):
                             mirror_augment, False, cutout_augment)
         src_aud_fold = os.path.join(self.path, 'audio',
                                     vid_name.replace('_left', '').replace('_right', '') + '.wav')
-        audio = load_audio(src_aud_fold, start_frame, track_len, self.fps[vid_name])
+        # audio = load_audio(src_aud_fold, start_frame, track_len, self.fps[vid_name])
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
