@@ -54,4 +54,3 @@ class CLSTM(nn.Module):
         out = self.fc(out)  # predictions based on every time step
 
         return out
-

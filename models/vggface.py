@@ -1,3 +1,4 @@
+# Modified from https://github.com/claudio-unipv/vggface-pytorch/blob/master/vggface.py
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

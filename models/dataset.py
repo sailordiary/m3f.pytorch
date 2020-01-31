@@ -98,8 +98,12 @@ class AffWild2iBugSequenceDataset(Dataset):
         self.windows_per_epoch = windows_per_epoch
         self.apply_cutout = apply_cutout
         
-        nb_frames = [l.split(',') for l in open('splits/nb_frames.csv', 'r').read().splitlines()]
-        self.nb_frames = {k: int(w) for k, w in nb_frames} # between 73 and 47419
+        self.nb_frames = {}
+        self.fps = {}
+        for l in open('splits/frames_fps.csv', 'r').read().splitlines():
+            name, nframes, fps = l.split(',')
+            self.nb_frames[name] = int(nframes)
+            self.fps[name] = float(fps)
         
         self.files = open('splits/{}.csv'.format(self.split), 'r').read().splitlines()
         if self.split == 'train':
