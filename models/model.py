@@ -65,7 +65,7 @@ class AffWild2VA(pl.LightningModule):
         return F.binary_cross_entropy_with_logits(y_hat.view(-1), (y.view(-1) > 0).float())
     
     def ce_loss(self, y_hat, y):
-        return F.cross_entropy(y_hat.view(-1), y.view(-1))
+        return F.cross_entropy(y_hat.view(-1, y_hat.size(-1)), y.view(-1))
     
     def mse_loss(self, y_hat, y):
         return F.mse_loss(y_hat, y)
