@@ -77,6 +77,10 @@ def load_video(path, start, length,
     return seq
 
 
+def load_audio(audio_path, start_idx, w_len, fps):
+    return
+
+
 class AffWild2iBugSequenceDataset(Dataset):
     '''
     112 by 112 face tracks using Aff-Wild2 crops released by iBug group.
@@ -94,10 +98,10 @@ class AffWild2iBugSequenceDataset(Dataset):
         self.windows_per_epoch = windows_per_epoch
         self.apply_cutout = apply_cutout
         
-        nb_frames = [l.split(',') for l in open(os.path.join(self.path, 'nb_frames.csv'), 'r').read().splitlines()]
+        nb_frames = [l.split(',') for l in open('splits/nb_frames.csv'), 'r').read().splitlines()]
         self.nb_frames = {k: int(w) for k, w in nb_frames} # between 73 and 47419
         
-        self.files = open('splits/{}.txt'.format(self.split), 'r').read().splitlines()
+        self.files = open('splits/{}.csv'.format(self.split), 'r').read().splitlines()
         if self.split == 'train':
             num_files = len(self.files)
             # indices of video to sample from
@@ -152,9 +156,12 @@ class AffWild2iBugSequenceDataset(Dataset):
         # note that frame index begins with 1
         cutout_augment = self.split == 'train' and self.apply_cutout
         mirror_augment = self.split == 'train' and random.random() > 0.5
-        src_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
-        inputs = load_video(src_fold, start_frame, track_len,
+        src_vid_fold = os.path.join(self.path, 'cropped_aligned', vid_name)
+        inputs = load_video(src_vid_fold, start_frame, track_len,
                             mirror_augment, False, cutout_augment)
+        src_aud_fold = os.path.join(self.path, 'audio',
+                                    vid_name.replace('_left', '').replace('_right', '') + '.wav')
+        audio = load_audio(src_aud_fold, start_frame, track_len, self.fps[vid_name])
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
