@@ -32,6 +32,13 @@ class AffWild2VA(pl.LightningModule):
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend
             )
+        elif self.hparams.backbone == 'v2p_split':
+            self.visual = VA_3DVGGM_Split(
+                hiddenDim=self.hparams.num_hidden,
+                frameLen=self.hparams.window,
+                backend=self.hparams.backend,
+                split_layer=self.hparams.split_layer
+            )
         elif self.hparams.backbone == 'densenet':
             self.visual = VA_3DDenseNet(
                 hiddenDim=self.hparams.num_hidden,
@@ -261,6 +268,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--optimizer', default='adam', type=str)
 
         parser.add_argument('--num_hidden', default=512, type=int)
+        parser.add_argument('--split_layer', default=5, type=int)
         parser.add_argument('--cutout', action='store_true', default=False)
 
         # training specific (for this model)
