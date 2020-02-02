@@ -30,7 +30,7 @@ if __name__ == '__main__':
     dst_dir = sys.argv[2]
     
     frames_fps = open('splits/frames_fps.csv', 'r').read().splitlines()
-    frames_fps = [l.split(',') for l in fps]
+    frames_fps = [l.split(',') for l in frames_fps]
     
     tasks = []
     for vid_name, _, fps in frames_fps:
