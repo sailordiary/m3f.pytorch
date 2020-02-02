@@ -103,10 +103,10 @@ class VA_3DVGGM(nn.Module):
         if self.backend == 'gru':
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
         elif self.backend == 'tcn':
-            self.tcn = nn.Sequential(
+            self.tcn = nn.ModuleList([
                 TemporalConvNet(self.inputDim, [self.hiddenDim] * self.nLayers, 3),
                 nn.Linear(self.hiddenDim, 2)
-            )
+            ])
 
         # initialize
         self._initialize_weights()
@@ -117,7 +117,8 @@ class VA_3DVGGM(nn.Module):
             x = x.transpose(1, 2)
             x = self.gru(x)
         elif self.backend == 'tcn':
-            x = self.tcn(x)
+            x = self.tcn[0](x).transpose(1, 2).contiguous()
+            x = self.tcn[1](x)
         return x
 
     def _initialize_weights(self):
