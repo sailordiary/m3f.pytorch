@@ -219,7 +219,7 @@ class AffWild2VA(pl.LightningModule):
             optimizer = torch.optim.Adam(self.parameters(),
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
-            scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.5)
+            scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
             return [optimizer], [scheduler]
         elif self.hparams.optimizer == 'sgd':
             optimizer = torch.optim.SGD(self.parameters(),
@@ -280,6 +280,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--window', default=32, type=int)
         parser.add_argument('--windows_per_epoch', default=200, type=int)
         parser.add_argument('--learning_rate', default=0.0001, type=float)
+        parser.add_argument('--decay_factor', default=0.5, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
 
