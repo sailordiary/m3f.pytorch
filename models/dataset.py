@@ -65,7 +65,7 @@ def load_video(path, start, length,
         # fill in the missing frames with a previous frame or zeros
         if img is None:
             if len(frames) > 0: img = frames[-1]
-            else: img = np.zeros((input_size, input_size, 3), dtype=np.uint8)
+            else: img = np.zeros((112, 112, 3), dtype=np.uint8)
         # image is present
         elif crop_augment:
             img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
