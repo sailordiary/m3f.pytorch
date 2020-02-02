@@ -117,7 +117,7 @@ class AffWild2SequenceDataset(Dataset):
         self.release = release
         self.input_size = input_size
         
-        self.base = os.path.join(self.path, 'cropped_aligned' if self.release == 'ibug' else 'face_imgs')
+        self.base = os.path.join(self.path, 'cropped_aligned' if self.release == 'ibug' else 'face_{}'.format(self.input_size))
         self.nb_frames = {}
         self.fps = {}
         for l in open('splits/frames_fps.csv', 'r').read().splitlines():
