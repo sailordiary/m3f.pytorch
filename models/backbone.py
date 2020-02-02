@@ -10,6 +10,7 @@ from .resnet import ResNet, ResNetV2, BasicBlock, BasicBlockV2
 from .densenet import DenseNet52_3D
 from .vggface import VGGFace
 from .rnn import GRU
+from .tcn import TemporalConvNet
 
 
 class VA_VGGFace(nn.Module):
@@ -50,6 +51,11 @@ class VA_VGGFace(nn.Module):
             elif isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight)
                 nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Conv1d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm1d):
+                m.weight.data.fill_(1)
+                m.bias.data.zero_()
 
 
 class VA_3DVGGM(nn.Module):
@@ -96,6 +102,11 @@ class VA_3DVGGM(nn.Module):
         # backend
         if self.backend == 'gru':
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
+        elif self.backend == 'tcn':
+            self.tcn = nn.Sequential(
+                TemporalConvNet(self.inputDim, [self.hiddenDim] * self.nLayers),
+                nn.Linear(self.hiddenDim, 2)
+            )
 
         # initialize
         self._initialize_weights()
@@ -105,6 +116,8 @@ class VA_3DVGGM(nn.Module):
         x = x.squeeze().transpose(1, 2)
         if self.backend == 'gru':
             x = self.gru(x)
+        elif self.backend == 'tcn':
+            x = self.tcn(x)
         return x
 
     def _initialize_weights(self):
