@@ -56,13 +56,13 @@ def load_video(path, start, length,
             if len(frames) > 0: img = frames[-1]
             else: img = np.zeros((112, 112, 3), dtype=np.uint8)
         if crop_augment:
-            img = cv2.resize(img, (128, 128))
             if is_training:
-                crop_x = random.randint(0, 16)
-                crop_y = random.randint(0, 16)
-                img = img[crop_y: crop_y + 112, crop_x: crop_x + 112]
+                crop_x = random.randint(0, 32)
+                crop_y = random.randint(0, 32)
+                img = img[crop_y: crop_y + 224, crop_x: crop_x + 224]
             else:
-                img = img[8: 120, 8: 120]
+                img = img[16: 240, 16: 240]
+            img = cv2.resize(img, (112, 112))
         if mirror_augment and is_training: img = cv2.flip(img, 1)
         # TODO: add temporal augmentation (repeat, deletion)
         frames.append(img)
