@@ -104,7 +104,7 @@ class VA_3DVGGM(nn.Module):
             self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
         elif self.backend == 'tcn':
             self.tcn = nn.Sequential(
-                TemporalConvNet(self.inputDim, [self.hiddenDim] * self.nLayers),
+                TemporalConvNet(self.inputDim, [self.hiddenDim] * self.nLayers, 3),
                 nn.Linear(self.hiddenDim, 2)
             )
 
