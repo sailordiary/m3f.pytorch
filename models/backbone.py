@@ -107,6 +107,18 @@ class VA_3DVGGM(nn.Module):
                 TemporalConvNet(self.inputDim, [self.hiddenDim] * self.nLayers, 3),
                 nn.Linear(self.hiddenDim, 2)
             ])
+        elif self.backend == 'tcn_simple':
+            self.tcn = nn.ModuleList([
+                nn.Sequential(
+                    nn.Conv1d(self.inputDim, self.hiddenDim, 3, 1, 1),
+                    nn.BatchNorm1d(512),
+                    nn.ReLU(True),
+                    nn.Conv1d(self.hiddenDim, self.hiddenDim, 3, 1, 1),
+                    nn.BatchNorm1d(512),
+                    nn.ReLU(True),
+                ),
+                nn.Linear(self.hiddenDim, 2)
+            ])
 
         # initialize
         self._initialize_weights()
@@ -116,7 +128,7 @@ class VA_3DVGGM(nn.Module):
         if self.backend == 'gru':
             x = x.transpose(1, 2)
             x = self.gru(x)
-        elif self.backend == 'tcn':
+        elif self.backend.startswith('tcn'):
             x = self.tcn[0](x).transpose(1, 2).contiguous()
             x = self.tcn[1](x)
         return x
