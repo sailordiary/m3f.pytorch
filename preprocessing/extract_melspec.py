@@ -1,6 +1,6 @@
 import os
 import sys
-import numyp as np
+import numpy as np
 import librosa
 import concurrent.futures
 
