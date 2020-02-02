@@ -35,7 +35,7 @@ if __name__ == '__main__':
     tasks = []
     for vid_name, _, fps in frames_fps:
         if float(fps) >= 15:
-            tasks.append((os.path.join(src_dir, k + '.wav'), os.path.join(dst_dir, k + '.npy')))
+            tasks.append((os.path.join(src_dir, vid_name + '.wav'), os.path.join(dst_dir, vid_name + '.npy')))
     
     ncomplete, total_cnt = 0, len(tasks)
     with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
