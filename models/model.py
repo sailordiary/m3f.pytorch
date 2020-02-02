@@ -1,7 +1,7 @@
 # coding=utf-8
 # Copyright 2020 Yuan-Hang Zhang.
 #
-from .dataset import AffWild2iBugSequenceDataset
+from .dataset import AffWild2SequenceDataset
 from .backbone import *
 from .utils import concordance_cc2, mse
 
@@ -232,7 +232,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def train_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2iBugSequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout)
+            dataset = AffWild2SequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release)
         else:
             # TODO: implement framewise
             raise NotImplementedError
@@ -245,7 +245,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def val_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2iBugSequenceDataset('val', self.hparams.dataset_path, self.hparams.window)
+            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
@@ -257,7 +257,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def test_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2iBugSequenceDataset('test', self.hparams.dataset_path, self.hparams.window)
+            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
@@ -291,6 +291,7 @@ class AffWild2VA(pl.LightningModule):
         # training specific (for this model)
         parser.add_argument('--distributed', action='store_true', default=False)
         parser.add_argument('--dataset_path', default='/.data/zhangyuanhang/Aff-Wild2', type=str)
+        parser.add_argument('--release', default='vipl', type=str)
         parser.add_argument('--checkpoint_path', default='.', type=str)
         parser.add_argument('--workers', default=8, type=int)
         parser.add_argument('--max_nb_epochs', default=30, type=int)
