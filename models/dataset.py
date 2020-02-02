@@ -47,22 +47,29 @@ def load_video(path, start, length,
                is_training=False,
                mirror_augment=False,
                crop_augment=False,
-               cutout_augment=False):
+               cutout_augment=False,
+               input_size=256):
     frames = []
+    # use identical crop windows for every frame
+    if crop_augment:
+        if is_training:
+            crop_x = random.randint(0, input_size // 8)
+            crop_y = random.randint(0, input_size // 8)
+        else:
+            crop_x, crop_y = input_size // 16, input_size // 16
+        crop_size = input_size * 7 // 8
+        resize = input_size > 128
+
     for i in range(start, start + length):
         img = cv2.imread(os.path.join(path, '{:05d}.jpg'.format(i + 1)))
         # fill in the missing frames with a previous frame or zeros
         if img is None:
             if len(frames) > 0: img = frames[-1]
-            else: img = np.zeros((112, 112, 3), dtype=np.uint8)
-        if crop_augment:
-            if is_training:
-                crop_x = random.randint(0, 32)
-                crop_y = random.randint(0, 32)
-                img = img[crop_y: crop_y + 224, crop_x: crop_x + 224]
-            else:
-                img = img[16: 240, 16: 240]
-            img = cv2.resize(img, (112, 112))
+            else: img = np.zeros((input_size, input_size, 3), dtype=np.uint8)
+        # image is present
+        elif crop_augment:
+            img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
+            if resize: img = cv2.resize(img, (112, 112))
         if mirror_augment and is_training: img = cv2.flip(img, 1)
         # TODO: add temporal augmentation (repeat, deletion)
         frames.append(img)
@@ -99,13 +106,14 @@ class AffWild2SequenceDataset(Dataset):
     apply_cutout: use Cutout augmentation
     release: 'ibug' -- 112*112 ArcFace crops; 'vipl' -- 256*256->128*128->112*112 VIPL crops
     '''
-    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug'):
+    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112):
         self.split = split
         self.path = path
         self.window_len = window_len
         self.windows_per_epoch = windows_per_epoch
         self.apply_cutout = apply_cutout
         self.release = release
+        self.input_size = input_size
         
         self.base = os.path.join(self.path, 'cropped_aligned' if self.release == 'ibug' else 'face_imgs')
         self.nb_frames = {}
@@ -174,7 +182,8 @@ class AffWild2SequenceDataset(Dataset):
                             self.split == 'train',
                             random.random() > 0.5,
                             self.release == 'vipl',
-                            self.apply_cutout)
+                            self.apply_cutout,
+                            self.input_size)
         
         if self.fps[vid_name] < 15:
             audio = np.zeros((self.window_len, 40), dtype=np.float32)

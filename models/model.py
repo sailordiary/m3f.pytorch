@@ -293,6 +293,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--distributed', action='store_true', default=False)
         parser.add_argument('--dataset_path', default='/.data/zhangyuanhang/Aff-Wild2', type=str)
         parser.add_argument('--release', default='vipl', type=str)
+        parser.add_argument('--input_size', default=256, type=int)
         parser.add_argument('--checkpoint_path', default='.', type=str)
         parser.add_argument('--workers', default=8, type=int)
         parser.add_argument('--max_nb_epochs', default=30, type=int)

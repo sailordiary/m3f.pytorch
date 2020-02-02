@@ -17,11 +17,12 @@ First, install dependencies
 # clone project   
 git clone https://github.com/sailordiary/affwild2-va-models
 ```
+You can download our cropped images from here: [TODO]
 
-## Main Contribution      
+## Main Contribution
 TODO
 
-## Baselines    
+## Results    
 TODO
 
 ### Citation   
