@@ -16,7 +16,7 @@ from torch.utils.data import Dataset
 def sequence_cutout(seq, n_holes=1, fill_value=127.5):
     h = seq.shape[-2]
     w = seq.shape[-1]
-    length = h // 2
+    length = h // 4
 
     for n in range(n_holes):
         y = np.random.randint(h)
