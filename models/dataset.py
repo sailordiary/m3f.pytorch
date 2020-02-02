@@ -193,16 +193,23 @@ class AffWild2SequenceDataset(Dataset):
             src_aud_fold = os.path.join(self.path, 'mel_spec', vid_name + '.npy')
             audio = load_audio(src_aud_fold, start_frame, track_len)
         
+        se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
+        se_features = np.load(se_path)[start_frame: start_frame + track_len]
+        
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
             inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge')
+            audio = np.pad(audio, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge')
+            se_features = np.pad(se_features, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge')
             if self.split != 'test':
                 labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
         batch = {
+            'audio': torch.from_numpy(audio),
             'video': torch.from_numpy(inputs),
+            'se_features': torch.from_numpy(se_features),
             'vid_name': vid_name,
             'start': start_frame,
             'length': track_len
