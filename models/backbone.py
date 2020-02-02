@@ -113,8 +113,8 @@ class VA_3DVGGM(nn.Module):
 
     def forward(self, x):
         x = self.v2p(x)
-        x = x.squeeze().transpose(1, 2)
         if self.backend == 'gru':
+            x = x.squeeze().transpose(1, 2)
             x = self.gru(x)
         elif self.backend == 'tcn':
             x = self.tcn(x)
