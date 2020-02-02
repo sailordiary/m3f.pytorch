@@ -31,7 +31,7 @@ class AffWild2VA(pl.LightningModule):
                 hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend,
-                nClasses=9 if self.hparams.valence_loss == 'softmax' else 2
+                nClasses=5 if self.hparams.valence_loss == 'softmax' else 2
             )
         elif self.hparams.backbone == 'v2p_split':
             self.visual = VA_3DVGGM_Split(
@@ -76,7 +76,7 @@ class AffWild2VA(pl.LightningModule):
         
         y_hat = self.forward(x)
         if self.hparams.valence_loss == 'softmax':
-            valence_hat, arousal_hat = y_hat[..., :8], y_hat[..., -1]
+            valence_hat, arousal_hat = y_hat[..., :4], y_hat[..., -1]
             valence = batch['class_valence']
             loss_v = self.ce_loss(valence_hat, valence)
         elif self.hparams.valence_loss == 'ccc':
@@ -84,7 +84,7 @@ class AffWild2VA(pl.LightningModule):
             valence = batch['label_valence']
             loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
-        loss = 0.4 * loss_v + 0.6 * loss_a
+        loss = 0.5 * loss_v + 0.5 * loss_a
         
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         if self.hparams.valence_loss == 'softmax':
