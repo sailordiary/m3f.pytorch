@@ -67,10 +67,11 @@ def load_video(path, start, length,
             if len(frames) > 0: img = frames[-1]
             else: img = np.zeros((112, 112, 3), dtype=np.uint8)
         # image is present
-        elif crop_augment:
-            img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
-            if resize: img = cv2.resize(img, (112, 112))
-        if mirror_augment and is_training: img = cv2.flip(img, 1)
+        else:
+            if crop_augment:
+                img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
+                if resize: img = cv2.resize(img, (112, 112))
+            if mirror_augment and is_training: img = cv2.flip(img, 1)
         # TODO: add temporal augmentation (repeat, deletion)
         frames.append(img)
     seq = np.stack(frames).transpose(3, 0, 1, 2).astype(np.float32) # THWC->CTHW
@@ -104,7 +105,8 @@ class AffWild2SequenceDataset(Dataset):
     window_len: length of temporal crop window
     windows_per_epoch: how many times each video should be sampled in one epoch
     apply_cutout: use Cutout augmentation
-    release: 'ibug' -- 112*112 ArcFace crops; 'vipl' -- 256*256->128*128->112*112 VIPL crops
+    release: 'ibug' -- 112*112 ArcFace crops; 'vipl' -- (256*256->)128*128->112*112 VIPL crops
+    input_size: actual size of raw input images
     '''
     def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112):
         self.split = split
