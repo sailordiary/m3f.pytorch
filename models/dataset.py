@@ -72,7 +72,7 @@ def load_video(path, start, length,
     return seq
 
 
-def load_audio(audio_path, start_idx, w_len, fps):
+def load_audio(audio_path, start_idx, w_len):
     mel_spec = np.load(audio_path)
     stacked_features = []
     for i in range(w_len):
@@ -180,7 +180,7 @@ class AffWild2SequenceDataset(Dataset):
             audio = np.zeros((self.window_len, 40), dtype=np.float32)
         else:
             src_aud_fold = os.path.join(self.path, 'mel_spec', vid_name + '.npy')
-            audio = load_audio(src_aud_fold, start_frame, track_len, self.fps[vid_name])
+            audio = load_audio(src_aud_fold, start_frame, track_len)
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
