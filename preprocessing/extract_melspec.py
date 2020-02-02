@@ -34,12 +34,13 @@ if __name__ == '__main__':
     
     tasks = []
     for vid_name, _, fps in frames_fps:
-        if float(fps) >= 15:
+        fps = float(fps)
+        if fps >= 15:
             tasks.append((fps, os.path.join(src_dir, vid_name + '.wav'), os.path.join(dst_dir, vid_name + '.npy')))
     
     ncomplete, total_cnt = 0, len(tasks)
     with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
-        for (vid_name, _), result in zip(tasks, executor.map(extract_melspec, tasks)):
+        for (_, vid_name, _), result in zip(tasks, executor.map(extract_melspec, tasks)):
             ncomplete += 1
             if result <= 0:
                 print('Finished {}, result: {}, progress: {}/{}'.format(vid_name, result, ncomplete, total_cnt))
