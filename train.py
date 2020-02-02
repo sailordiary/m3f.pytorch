@@ -21,6 +21,7 @@ def main(hparams):
     model = AffWild2VA(hparams)
 
     trainer = Trainer(
+        early_stop_callback=None,
         check_val_every_n_epoch=1,
         gradient_clip_val=1.0,
         default_save_path=hparams.checkpoint_path,
