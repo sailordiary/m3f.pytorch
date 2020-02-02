@@ -6,7 +6,7 @@ import concurrent.futures
 
 
 def extract_melspec(task):
-    src_wav, dst_npy = task
+    fps, src_wav, dst_npy = task
     src_wav = src_wav.replace('_left', '').replace('_right', '')
     if os.path.exists(dst_npy): return 1
     try:
@@ -35,11 +35,11 @@ if __name__ == '__main__':
     tasks = []
     for vid_name, _, fps in frames_fps:
         if float(fps) >= 15:
-            tasks.append((os.path.join(src_dir, vid_name + '.wav'), os.path.join(dst_dir, vid_name + '.npy')))
+            tasks.append((fps, os.path.join(src_dir, vid_name + '.wav'), os.path.join(dst_dir, vid_name + '.npy')))
     
     ncomplete, total_cnt = 0, len(tasks)
     with concurrent.futures.ProcessPoolExecutor(max_workers=16) as executor:
-        for vid_name, result in zip(tasks, executor.map(extract_melspec, tasks)):
+        for (vid_name, _), result in zip(tasks, executor.map(extract_melspec, tasks)):
             ncomplete += 1
             if result <= 0:
                 print('Finished {}, result: {}, progress: {}/{}'.format(vid_name, result, ncomplete, total_cnt))
