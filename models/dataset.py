@@ -81,7 +81,7 @@ def load_audio(audio_path, start_idx, w_len, fps):
         nframes = len(window_feats)
         if len(window_feats) < 5:
             window_feats = np.pad(window_feats, ((0, 5-nframes), (0, 0)), 'constant')
-        stacked_features.append(window_feats.reshape(200))
+        stacked_features.append(window_feats.reshape(-1))
     stacked_features = np.stack(stacked_features)
 
     return stacked_features
