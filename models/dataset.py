@@ -73,7 +73,18 @@ def load_video(path, start, length,
 
 
 def load_audio(audio_path, start_idx, w_len, fps):
-    return
+    mel_spec = np.load(audio_path)
+    stacked_features = []
+    for i in range(w_len):
+        # context_width = 2
+        window_feats = mel_spec[start_idx + i*3: start_idx + i*3 + 5]
+        nframes = len(window_feats)
+        if len(window_feats) < 5:
+            window_feats = np.pad(window_feats, ((0, 5-nframes), (0, 0))), 'constant')
+        stacked_features.append(window_feats)
+    stacked_features = np.stack(stacked_features)
+
+    return stacked_features
 
 
 class AffWild2SequenceDataset(Dataset):
@@ -164,9 +175,12 @@ class AffWild2SequenceDataset(Dataset):
                             random.random() > 0.5,
                             self.release == 'vipl',
                             self.apply_cutout)
-        src_aud_fold = os.path.join(self.path, 'audio',
-                                    vid_name.replace('_left', '').replace('_right', '') + '.wav')
-        # audio = load_audio(src_aud_fold, start_frame, track_len, self.fps[vid_name])
+        
+        if self.fps[vid_name] < 15:
+            audio = np.zeros((self.window_len, 40), dtype=np.float32)
+        else:
+            src_aud_fold = os.path.join(self.path, 'mel_spec', vid_name + '.npy')
+            audio = load_audio(src_aud_fold, start_frame, track_len, self.fps[vid_name])
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
