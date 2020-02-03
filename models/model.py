@@ -90,7 +90,6 @@ class AffWild2VA(pl.LightningModule):
             if 'audio' in self.hparams.modality:
                 audio_feats = self.audio(batch['audio'])
                 video_feats = self.visual(x)
-                print (audio_feats.size(), video_feats.size())
                 if self.hparams.fusion_type == 'concat':
                     features = torch.cat((audio_feats, video_feats), dim=-1)
                     return self.fusion(features)

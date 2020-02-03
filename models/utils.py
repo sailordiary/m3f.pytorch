@@ -7,10 +7,10 @@ def concordance_cc2(r1, r2, reduction='mean'):
     '''
     Computes row-wise CCC.
     '''
-    r1_mean = r1.mean(dim=-1, keepdims=True)
-    r2_mean = r2.mean(dim=-1, keepdims=True)
-    mean_cent_prod = ((r1 - r1_mean) * (r2 - r2_mean)).mean(dim=-1, keepdims=True)
-    ccc = (2 * mean_cent_prod) / (r1.var(dim=-1, keepdims=True) + r2.var(dim=-1, keepdims=True) + (r1_mean - r2_mean) ** 2)
+    r1_mean = r1.mean(dim=-1, keepdim=True)
+    r2_mean = r2.mean(dim=-1, keepdim=True)
+    mean_cent_prod = ((r1 - r1_mean) * (r2 - r2_mean)).mean(dim=-1, keepdim=True)
+    ccc = (2 * mean_cent_prod) / (r1.var(dim=-1, keepdim=True) + r2.var(dim=-1, keepdim=True) + (r1_mean - r2_mean) ** 2)
     if reduction == 'none':
         return ccc
     elif reduction == 'mean':
