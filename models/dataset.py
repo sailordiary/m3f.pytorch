@@ -151,8 +151,9 @@ class AffWild2SequenceDataset(Dataset):
                 # valence, arousal
                 lines = open(os.path.join(self.path, 'annotations', 'VA_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
                 self.labels[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
-            for vid_name in open('splits/expr.csv', 'r').read().splitlines():
-                lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
+            for l in open('splits/expr.csv', 'r').read().splitlines():
+                vid_name, expr_split = l.split(',')
+                lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', expr_split, vid_name + '.txt'), 'r').read().splitlines()
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
         if self.split == 'train':
             self.avail_windows = self.get_available_windows()
