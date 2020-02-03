@@ -126,13 +126,13 @@ class AffWild2VA(pl.LightningModule):
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         if self.hparams.loss == 'mtl':
             expr_hat, expr, mask = y_hat[..., :7], batch['class_expr'], batch['expr_valid']
-            print (expr, expr_hat.size())
             loss_expr = self.ce_loss(expr_hat, expr, mask)
             progress_dict['loss_expr'] = loss_expr
             loss += loss_expr
             max_class = torch.argmax(expr_hat, dim=-1).view(-1)
             mask_tile = mask.view(-1)
             valid_items = mask_tile.sum()
+            print (valid_items)
             if valid_items > 0:
                 correct = torch.sum(max_class[mask_tile] == expr.view(-1)[mask_tile]).item() / valid_items
                 progress_dict['acc_v'] = correct
