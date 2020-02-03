@@ -124,23 +124,26 @@ class AffWild2VA(pl.LightningModule):
         loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
         
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
+        log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
+
         if self.hparams.loss == 'mtl':
-            expr_hat, expr, mask = y_hat[..., :7], batch['class_expr'], batch['expr_valid']
-            loss_expr = self.ce_loss(expr_hat, expr, mask)
-            progress_dict['loss_expr'] = loss_expr
-            loss += loss_expr
-            max_class = torch.argmax(expr_hat, dim=-1).view(-1)
+            mask = batch['expr_valid']
             mask_tile = mask.view(-1)
             valid_items = torch.sum(mask_tile).item()
             if valid_items > 0:
+                expr_hat, expr = y_hat[..., :7], batch['class_expr']
+                loss_expr = self.ce_loss(expr_hat, expr, mask)
+                loss += loss_expr
+                log_dict['loss_expr'] = loss_expr
+                progress_dict['loss_expr'] = loss_expr
+                max_class = torch.argmax(expr_hat, dim=-1).view(-1)
                 num_corrects = torch.sum(max_class[mask_tile] == expr.view(-1)[mask_tile]).item()
                 acc = num_corrects / valid_items
-                print (num_corrects, valid_items)
                 progress_dict['acc_expr'] = acc
         return {
             'loss': loss,
             'progress_bar': progress_dict,
-            'log': {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
+            'log': log_dict
         }
 
     def validation_step(self, batch, batch_idx):
