@@ -5,6 +5,7 @@
 
 # Outputs
 ensembled_predictions/
+lr_plot.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

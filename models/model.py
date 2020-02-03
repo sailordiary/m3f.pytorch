@@ -7,6 +7,8 @@ from .rnn import GRU
 from .att_fusion import AttFusion
 from .utils import concordance_cc2, mse
 
+from .lr_finder import *
+
 from argparse import ArgumentParser
 
 import torch
@@ -129,9 +131,13 @@ class AffWild2VA(pl.LightningModule):
             loss_v = self.mse_loss(valence_hat, valence)
             loss_a = self.mse_loss(arousal_hat, arousal)
         loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
-        
+
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
+
+        if self.hparams.test_lr:
+            self.lr_test.step()
+            lr = self.lr_test.get_lr()[0]
 
         if self.hparams.loss == 'mtl':
             mask = batch['expr_valid']
@@ -147,11 +153,19 @@ class AffWild2VA(pl.LightningModule):
                 num_corrects = torch.sum(max_class[mask_tile] == expr.view(-1)[mask_tile]).item()
                 acc = num_corrects / valid_items
                 progress_dict['acc_expr'] = acc
-        return {
-            'loss': loss,
-            'progress_bar': progress_dict,
-            'log': log_dict
-        }
+        
+        ret = {'loss': loss, 'progress_bar': progress_dict, 'log': log_dict}
+        if self.hparams.test_lr: ret['lr'] = lr
+
+        return ret
+
+    def training_end(self, outputs):
+        if self.hparams.test_lr:
+            history = {}
+            history['lr'] = [x['lr'] for x in outputs]
+            history['loss'] = [x['loss'] for x in outputs]
+            plot_lr(history)
+        return {}
 
     def validation_step(self, batch, batch_idx):
         v, a, v_hat, a_hat = [], [], [], []
@@ -283,8 +297,12 @@ class AffWild2VA(pl.LightningModule):
             optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()),
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
-            scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
-            return [optimizer], [scheduler]
+            if self.hparams.test_lr:
+                self.lr_test = BatchExponentialLR(optimizer, 1e-6, 1000)
+                return optimizer
+            else:
+                scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
+                return [optimizer], [scheduler]
         elif self.hparams.optimizer == 'sgd':
             optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.parameters()),
                                         lr=self.hparams.learning_rate,
@@ -351,6 +369,8 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--decay_factor', default=0.5, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
+
+        parser.add_argument('--test_lr', action='store_true', default=False)
 
         parser.add_argument('--loss', default='ccc', type=str)
         parser.add_argument('--loss_lambda', default=0.346, type=float)
