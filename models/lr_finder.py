@@ -1,7 +1,5 @@
 # Based on https://github.com/davidtvs/pytorch-lr-finder/blob/master/torch_lr_finder/lr_finder.py
 from torch.optim.lr_scheduler import _LRScheduler
-import matplotlib
-matplotlib.use('Agg')
 
 from matplotlib import pyplot as plt
 

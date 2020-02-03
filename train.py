@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import logging
 from pytorch_lightning import Trainer
 from argparse import ArgumentParser

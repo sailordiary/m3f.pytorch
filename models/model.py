@@ -5,8 +5,8 @@ from .dataset import AffWild2SequenceDataset
 from .backbone import *
 from .rnn import GRU
 from .att_fusion import AttFusion
-from .utils import concordance_cc2, mse
 
+from .utils import concordance_cc2, mse
 from .lr_finder import *
 
 from argparse import ArgumentParser
