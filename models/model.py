@@ -138,14 +138,17 @@ class AffWild2VA(pl.LightningModule):
         log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
 
         if self.hparams.test_lr:
-            if batch_idx == 1000:
+            if batch_idx == 200:
                 print ('Saved lr plot')
                 plot_lr(self.history)
-            elif batch_idx < 1000:
+            elif batch_idx < 200:
                 self.lr_test.step()
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
-                self.history['loss'].append(loss)
+                if batch_idx == 0:
+                    self.history['loss'].append(loss)
+                else:
+                    self.history['loss'].append(0.05 * loss + 0.95 * self.history['loss'][-1])
 
         if self.hparams.loss == 'mtl':
             mask = batch['expr_valid']
@@ -299,7 +302,7 @@ class AffWild2VA(pl.LightningModule):
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
             if self.hparams.test_lr:
-                self.lr_test = BatchExponentialLR(optimizer, 1e-6, 1000)
+                self.lr_test = BatchExponentialLR(optimizer, 1e-6, 200)
                 return optimizer
             else:
                 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
