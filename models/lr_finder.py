@@ -54,6 +54,7 @@ def plot_lr(history, skip_start=10, skip_end=5, log_lr=True, show_lr=None):
         lrs = lrs[skip_start:-skip_end]
         losses = losses[skip_start:-skip_end]
     # Plot loss as a function of the learning rate
+    print (lrs)
     plt.plot(lrs, losses)
     if log_lr:
         plt.xscale("log")
