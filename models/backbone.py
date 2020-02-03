@@ -14,7 +14,7 @@ from .tcn import TemporalConvNet
 
 
 class VA_VGGFace(nn.Module):
-    def __init__(self, inputDim=4096, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru'):
+    def __init__(self, inputDim=4096, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', nFCs=1):
         super(VA_VGGFace, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
@@ -22,12 +22,13 @@ class VA_VGGFace(nn.Module):
         self.frameLen = frameLen
         self.nLayers = nLayers
         self.backend = backend
+        self.nFCs = nFCs
         
         self.vgg = VGGFace()
 
         # backend
         if self.backend == 'gru':
-            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
+            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
 
         # initialize
         self._initialize_weights()
@@ -59,7 +60,7 @@ class VA_VGGFace(nn.Module):
 
 
 class VA_3DVGGM(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', norm_layer='bn'):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', norm_layer='bn', nFCs=1):
         super(VA_3DVGGM, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
@@ -67,6 +68,7 @@ class VA_3DVGGM(nn.Module):
         self.frameLen = frameLen
         self.nLayers = nLayers
         self.backend = backend
+        self.nFCs = nFCs
         
         self.v2p = nn.Sequential(
             # conv1 + pool1
@@ -101,7 +103,7 @@ class VA_3DVGGM(nn.Module):
         )
         # backend
         if self.backend == 'gru':
-            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
+            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
         elif self.backend == 'tcn':
             self.tcn = nn.ModuleList([
                 TemporalConvNet(self.inputDim, [self.hiddenDim] * self.nLayers, 3),
@@ -151,7 +153,7 @@ class VA_3DVGGM(nn.Module):
 
 
 class VA_3DVGGM_Split(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, backend='gru', norm_layer='bn', split_layer=5):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, backend='gru', norm_layer='bn', split_layer=5, nFCs):
         super(VA_3DVGGM_Split, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
@@ -160,6 +162,7 @@ class VA_3DVGGM_Split(nn.Module):
         self.backend = backend
         self.split_layer = split_layer
         self.norm_layer = norm_layer
+        self.nFCs = nFCs
 
         assert split_layer >= 2, 'degenerate multi-tower structure'
         shared = [
@@ -183,10 +186,10 @@ class VA_3DVGGM_Split(nn.Module):
         # backend
         if self.backend == 'gru':
             if split_layer == 5:
-                self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, 2)
+                self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, 2, self.nFCs)
             else:
-                self.gru_v = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1)
-                self.gru_a = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1)
+                self.gru_v = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                self.gru_a = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1, self.nFCs)
 
         # initialize
         self._initialize_weights()
@@ -256,7 +259,7 @@ class VA_3DVGGM_Split(nn.Module):
 
 
 class VA_3DResNet(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', use_cbam=False, resnet_ver='v2', resnet_depth=18, frontend_agg_mode='ap'):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', use_cbam=False, resnet_ver='v2', resnet_depth=18, frontend_agg_mode='ap', nFCs=1):
         super(VA_3DResNet, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
@@ -264,6 +267,7 @@ class VA_3DResNet(nn.Module):
         self.frameLen = frameLen
         self.nLayers = nLayers
         self.backend = backend
+        self.nFCs = nFCs
         
         final_fmap_size = 3
         
@@ -282,7 +286,7 @@ class VA_3DResNet(nn.Module):
             self.resnet = ResNet(BasicBlock, block_config, self.inputDim, zero_init_residual=True, agg_mode=frontend_agg_mode, fmap_out_size=final_fmap_size, use_cbam=use_cbam)
         # backend
         if self.backend == 'gru':
-            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
+            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
 
         # initialize
         self._initialize_weights()
@@ -316,7 +320,7 @@ class VA_3DResNet(nn.Module):
 
 
 class VA_3DDenseNet(nn.Module):
-    def __init__(self, inputDim=392, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', frontend_agg_mode='ap'):
+    def __init__(self, inputDim=392, hiddenDim=512, nLayers=2, nClasses=2, frameLen=16, backend='gru', frontend_agg_mode='ap', nFCs=1):
         super(VA_3DDenseNet, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
@@ -324,6 +328,7 @@ class VA_3DDenseNet(nn.Module):
         self.frameLen = frameLen
         self.nLayers = nLayers
         self.backend = backend
+        self.nFCs = nFCs
         
         final_fmap_size = 3
         
@@ -336,7 +341,7 @@ class VA_3DDenseNet(nn.Module):
         self.densenet = DenseNet52_3D(self.inputDim, agg_mode=frontend_agg_mode, fmap_out_size=final_fmap_size)
         # backend
         if self.backend == 'gru':
-            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses)
+            self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
 
         # initialize
         self._initialize_weights()

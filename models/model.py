@@ -33,14 +33,16 @@ class AffWild2VA(pl.LightningModule):
                     frameLen=self.hparams.window,
                     backend=self.hparams.backend,
                     resnet_ver='v1',
-                    nClasses=rnn_fc_classes
+                    nClasses=rnn_fc_classes,
+                    nFCs=self.hparams.num_fc_layers
                 )
             elif self.hparams.backbone == 'v2p':
                 self.visual = VA_3DVGGM(
                     hiddenDim=self.hparams.num_hidden,
                     frameLen=self.hparams.window,
                     backend=self.hparams.backend,
-                    nClasses=rnn_fc_classes
+                    nClasses=rnn_fc_classes,
+                    nFCs=self.hparams.num_fc_layers
                 )
             elif self.hparams.backbone == 'v2p_split':
                 self.visual = VA_3DVGGM_Split(
@@ -48,21 +50,24 @@ class AffWild2VA(pl.LightningModule):
                     frameLen=self.hparams.window,
                     backend=self.hparams.backend,
                     split_layer=self.hparams.split_layer,
-                    nClasses=rnn_fc_classes
+                    nClasses=rnn_fc_classes,
+                    nFCs=self.hparams.num_fc_layers
                 )
             elif self.hparams.backbone == 'densenet':
                 self.visual = VA_3DDenseNet(
                     hiddenDim=self.hparams.num_hidden,
                     frameLen=self.hparams.window,
                     backend=self.hparams.backend,
-                    nClasses=rnn_fc_classes
+                    nClasses=rnn_fc_classes,
+                    nFCs=self.hparams.num_fc_layers
                 )
             elif self.hparams.backbone == 'vggface':
                 self.visual = VA_VGGFace(
                     hiddenDim=self.hparams.num_hidden,
                     frameLen=self.hparams.window,
                     backend=self.hparams.backend,
-                    nClasses=rnn_fc_classes
+                    nClasses=rnn_fc_classes,
+                    nFCs=self.hparams.num_fc_layers
                 )
         if 'audio' in self.hparams.modality:
             self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes)
@@ -314,6 +319,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--loss_lambda', default=0.346, type=float)
         parser.add_argument('--num_hidden', default=512, type=int)
         parser.add_argument('--split_layer', default=5, type=int)
+        parser.add_argument('--num_fc_layers', default=1, type=int)
         parser.add_argument('--cutout', action='store_true', default=False)
 
         # training specific (for this model)
