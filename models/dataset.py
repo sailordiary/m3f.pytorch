@@ -207,7 +207,7 @@ class AffWild2SequenceDataset(Dataset):
             if self.split != 'test':
                 labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
         batch = {
-            'audio': torch.from_numpy(audio),
+            # 'audio': torch.from_numpy(audio),
             'video': torch.from_numpy(inputs),
             'se_features': torch.from_numpy(se_features),
             'vid_name': vid_name,

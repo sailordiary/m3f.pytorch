@@ -1,5 +1,5 @@
 # coding=utf-8
-# Copyright 2020 Yuan-Hang Zhang.
+# Copyright 2020 Yuan-Hang Zhang and Rulin Huang.
 #
 from .dataset import AffWild2SequenceDataset
 from .backbone import *
