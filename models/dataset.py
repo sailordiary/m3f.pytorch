@@ -225,6 +225,8 @@ class AffWild2SequenceDataset(Dataset):
             else:
                 expr_labels = np.zeros(track_len, dtype=np.int64)
             expr_valid = np.array([has_expr] * track_len) & (expr_labels >= 0)
+            # prune invalid labels, which count towards CE
+            expr_labels = np.clip(expr_labels, 0, 6)
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
