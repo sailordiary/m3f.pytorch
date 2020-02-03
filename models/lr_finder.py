@@ -54,12 +54,20 @@ def plot_lr(history, skip_start=10, skip_end=5, log_lr=True, show_lr=None):
         lrs = lrs[skip_start:-skip_end]
         losses = losses[skip_start:-skip_end]
     # Plot loss as a function of the learning rate
-    print (lrs)
     plt.plot(lrs, losses)
     if log_lr:
         plt.xscale("log")
     plt.xlabel("Learning rate")
     plt.ylabel("Loss")
+
+    # Suggestion
+    try:
+        mg = (np.gradient(np.array(losses))).argmin()
+        print(f"Min numerical gradient: {lrs[mg]:.2E}")
+        plt.plot(lrs[mg],losses[mg],markersize=10,marker='o',color='red')
+    except:
+        print("Failed to compute the gradients, there might not be enough points.")
+
     if show_lr is not None:
         plt.axvline(x=show_lr, color="red")
     plt.savefig('lr_plot.png')
