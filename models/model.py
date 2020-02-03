@@ -84,7 +84,7 @@ class AffWild2VA(pl.LightningModule):
             valence = batch['label_valence']
             loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
-        loss = 0.5 * loss_v + 0.5 * loss_a
+        loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
         
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         if self.hparams.valence_loss == 'softmax':
@@ -285,6 +285,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--optimizer', default='adam', type=str)
 
         parser.add_argument('--valence_loss', default='ccc', type=str)
+        parser.add_argument('--loss_lambda', default=0.346, type=float)
         parser.add_argument('--num_hidden', default=512, type=int)
         parser.add_argument('--split_layer', default=5, type=int)
         parser.add_argument('--cutout', action='store_true', default=False)
