@@ -279,7 +279,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
         parser.add_argument('--windows_per_epoch', default=200, type=int)
-        parser.add_argument('--learning_rate', default=0.0001, type=float)
+        parser.add_argument('--learning_rate', default=0.0002, type=float)
         parser.add_argument('--decay_factor', default=0.5, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)

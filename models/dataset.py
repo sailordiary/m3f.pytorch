@@ -194,7 +194,7 @@ class AffWild2SequenceDataset(Dataset):
             audio = load_audio(src_aud_fold, start_frame, track_len)
         
         se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
-        se_features = np.load(se_path)[start_frame: start_frame + track_len]
+        se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose()
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
