@@ -77,7 +77,7 @@ class AffWild2VA(pl.LightningModule):
                 self.fusion = GRU(self.hparams.num_hidden * 2 + self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4),
                     self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
             elif self.hparams.fusion_type == 'attention':
-                self.att_fuse = AttFusion(self.hparams.num_hidden * 2, 128)
+                self.att_fuse = AttFusion(self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4), 128)
                 self.fusion = GRU(self.hparams.num_hidden, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
 
     def forward(self, batch):
