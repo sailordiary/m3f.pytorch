@@ -126,12 +126,12 @@ class AffWild2VA(pl.LightningModule):
         y_hat = self.forward(batch)
         valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
 
-        if self.hparams.loss == 'ccc':
-            loss_v = self.ccc_loss(valence_hat, valence)
-            loss_a = self.ccc_loss(arousal_hat, arousal)
-        elif self.hparams.loss == 'mse':
+        if 'mse' in self.hparams.loss:
             loss_v = self.mse_loss(valence_hat, valence)
             loss_a = self.mse_loss(arousal_hat, arousal)
+        else:
+            loss_v = self.ccc_loss(valence_hat, valence)
+            loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
 
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
@@ -150,10 +150,10 @@ class AffWild2VA(pl.LightningModule):
                 else:
                     self.history['loss'].append(0.05 * loss + 0.95 * self.history['loss'][-1])
 
-        if self.hparams.loss == 'mtl':
+        if 'mtl' in self.hparams.loss:
             mask = batch['expr_valid']
             mask_tile = mask.view(-1)
-            valid_items = torch.sum(mask_tile).item()
+            valid_items = torch.sum(mask_tile.long()).item()
             if valid_items > 0:
                 expr_hat, expr = y_hat[..., :7], batch['class_expr']
                 loss_expr = self.ce_loss(expr_hat, expr, mask)
