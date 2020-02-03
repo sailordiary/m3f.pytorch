@@ -188,7 +188,7 @@ class AffWild2SequenceDataset(Dataset):
                             self.input_size)
         
         if self.fps[vid_name] < 15:
-            audio = np.zeros((self.window_len, 40), dtype=np.float32)
+            audio = np.zeros((self.window_len, 200), dtype=np.float32)
         else:
             src_aud_fold = os.path.join(self.path, 'mel_spec', vid_name + '.npy')
             audio = load_audio(src_aud_fold, start_frame, track_len)
@@ -201,13 +201,13 @@ class AffWild2SequenceDataset(Dataset):
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
-            inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge')
-            audio = np.pad(audio, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge')
-            se_features = np.pad(se_features, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge')
+            inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T, H, W)
+            audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
+            se_features = np.pad(se_features, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T)
             if self.split != 'test':
                 labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
         batch = {
-            # 'audio': torch.from_numpy(audio),
+            'audio': torch.from_numpy(audio),
             'video': torch.from_numpy(inputs),
             'se_features': torch.from_numpy(se_features),
             'vid_name': vid_name,

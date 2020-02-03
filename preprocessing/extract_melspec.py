@@ -17,7 +17,7 @@ def extract_melspec(task):
                                                hop_length=hop_length, win_length=400, 
                                                n_mels=40)
         spec = librosa.core.power_to_db(power)
-        np.save(dst_npy, spec.transpose())
+        np.save(dst_npy, spec.transpose()) # (time, channels)
         
         return 0
     except Exception as e:
