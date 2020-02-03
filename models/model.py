@@ -302,7 +302,7 @@ class AffWild2VA(pl.LightningModule):
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
             if self.hparams.test_lr:
-                self.lr_test = BatchExponentialLR(optimizer, 1e-6, 200)
+                self.lr_test = BatchExponentialLR(optimizer, 10, 200)
                 return optimizer
             else:
                 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
