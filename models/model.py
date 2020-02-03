@@ -126,6 +126,7 @@ class AffWild2VA(pl.LightningModule):
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         if self.hparams.loss == 'mtl':
             expr_hat, expr, mask = y_hat[..., :7], batch['class_expr'], batch['expr_valid']
+            print (expr, expr_hat.size())
             loss_expr = self.ce_loss(expr_hat, expr, mask)
             progress_dict['loss_expr'] = loss_expr
             loss += loss_expr

@@ -237,8 +237,8 @@ class AffWild2SequenceDataset(Dataset):
                 audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
             if self.split != 'test':
                 labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
-                expr_labels = np.pad(expr_labels, ((0, to_pad), (0, 0)), 'edge')
-                expr_valid = np.pad(expr_valid, ((0, to_pad), (0, 0)), 'edge')
+                expr_labels = np.pad(expr_labels, ((0, to_pad)), 'edge')
+                expr_valid = np.pad(expr_valid, ((0, to_pad)), 'edge')
 
         batch = {
             'vid_name': vid_name,
