@@ -153,12 +153,13 @@ class VA_3DVGGM(nn.Module):
 
 
 class VA_3DVGGM_Split(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, backend='gru', norm_layer='bn', split_layer=5, nFCs=1):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, nClasses=2, backend='gru', norm_layer='bn', split_layer=5, nFCs=1):
         super(VA_3DVGGM_Split, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
         self.frameLen = frameLen
         self.nLayers = nLayers
+        self.nClasses = nClasses
         self.backend = backend
         self.split_layer = split_layer
         self.norm_layer = norm_layer
@@ -186,10 +187,10 @@ class VA_3DVGGM_Split(nn.Module):
         # backend
         if self.backend == 'gru':
             if split_layer == 5:
-                self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, 2, self.nFCs)
+                self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
             else:
-                self.gru_v = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1, self.nFCs)
-                self.gru_a = GRU(self.inputDim, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                self.gru_v = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses // 2, self.nFCs)
+                self.gru_a = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses // 2, self.nFCs)
 
         # initialize
         self._initialize_weights()
