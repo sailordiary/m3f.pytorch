@@ -122,8 +122,12 @@ class AffWild2VA(pl.LightningModule):
         y_hat = self.forward(batch)
         valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
 
-        loss_v = self.ccc_loss(valence_hat, valence)
-        loss_a = self.ccc_loss(arousal_hat, arousal)
+        if self.hparams.loss == 'ccc':
+            loss_v = self.ccc_loss(valence_hat, valence)
+            loss_a = self.ccc_loss(arousal_hat, arousal)
+        elif self.hparams.loss == 'mse':
+            loss_v = self.mse_loss(valence_hat, valence)
+            loss_a = self.mse_loss(arousal_hat, arousal)
         loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
         
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
