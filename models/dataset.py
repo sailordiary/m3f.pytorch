@@ -108,7 +108,7 @@ class AffWild2SequenceDataset(Dataset):
     release: 'ibug' -- 112*112 ArcFace crops; 'vipl' -- (256*256->)128*128->112*112 VIPL crops
     input_size: actual size of raw input images
     '''
-    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112):
+    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112, modality='visual'):
         self.split = split
         self.path = path
         self.window_len = window_len
@@ -116,6 +116,7 @@ class AffWild2SequenceDataset(Dataset):
         self.apply_cutout = apply_cutout
         self.release = release
         self.input_size = input_size
+        self.modality = modality
         
         self.base = os.path.join(self.path, 'cropped_aligned' if self.release == 'ibug' else 'face_{}'.format(self.input_size))
         self.nb_frames = {}
@@ -126,6 +127,10 @@ class AffWild2SequenceDataset(Dataset):
             self.fps[name] = float(fps)
         
         self.files = open('splits/{}.csv'.format(self.split), 'r').read().splitlines()
+        # drop <15 fps videos for audio-only training
+        if self.modality == 'audio':
+            self.files = [name for name in self.files if self.fps[name] >= 15.0]
+        
         if self.split == 'train':
             num_files = len(self.files)
             # indices of video to sample from
@@ -151,18 +156,27 @@ class AffWild2SequenceDataset(Dataset):
     
     def get_available_windows(self):
         windows = {k: [] for k in self.files}
-        cache_path = '{}_{}_window{}.pkl'.format(self.release, self.split, self.window_len)
+        cache_path = '{}_{}_window{}_{}.pkl'.format(self.release, self.split, self.window_len, self.modality)
         if os.path.exists(cache_path):
             return pickle.load(open(cache_path, 'rb'))
-        for vid_name in tqdm(self.files, desc='Scanning available windows'):
-            src_fold = os.path.join(self.base, vid_name)
-            has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels[vid_name]))])
-            has_label = np.max(np.abs(self.labels[vid_name]), axis=1) <= 1
-            avail_ranges = one_runs(has_image & has_label)
-            for w_st, w_ed in avail_ranges:
-                windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
-            # we're up all night to get lucky :(
-            assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
+        if self.modality == 'audio':
+            # audio only
+            for vid_name in tqdm(self.files, desc='Scanning available windows'):
+                has_label = np.max(np.abs(self.labels[vid_name]), axis=1) <= 1
+                avail_ranges = one_runs(has_label)
+                for w_st, w_ed in avail_ranges:
+                    windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
+        else:
+            # visual and audiovisual
+            for vid_name in tqdm(self.files, desc='Scanning available windows'):
+                src_fold = os.path.join(self.base, vid_name)
+                has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels[vid_name]))])
+                has_label = np.max(np.abs(self.labels[vid_name]), axis=1) <= 1
+                avail_ranges = one_runs(has_image & has_label)
+                for w_st, w_ed in avail_ranges:
+                    windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
+                # we're up all night to get lucky :(
+                assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
         pickle.dump(windows, open(cache_path, 'wb'))
         return windows
 
@@ -177,43 +191,50 @@ class AffWild2SequenceDataset(Dataset):
             vid_name = self.files[vid_idx]
             track_len = min(self.window_len, self.nb_frames[vid_name] - start_frame)
         
-        # note that frame indices begin with 1
-        is_training = self.split == 'train'
-        src_vid_fold = os.path.join(self.base, vid_name)
-        inputs = load_video(src_vid_fold, start_frame, track_len,
-                            self.split == 'train',
-                            random.random() > 0.5,
-                            self.release == 'vipl',
-                            self.apply_cutout,
-                            self.input_size)
-        
-        if self.fps[vid_name] < 15:
-            audio = np.zeros((self.window_len, 200), dtype=np.float32)
-        else:
-            src_aud_fold = os.path.join(self.path, 'mel_spec', vid_name + '.npy')
-            audio = load_audio(src_aud_fold, start_frame, track_len)
-        
-        se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
-        se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose()
+        # note that frame indices in filenames begin with 1
+        if 'visual' in self.modality:
+            is_training = self.split == 'train'
+            src_vid_fold = os.path.join(self.base, vid_name)
+            inputs = load_video(src_vid_fold, start_frame, track_len,
+                                self.split == 'train',
+                                random.random() > 0.5,
+                                self.release == 'vipl',
+                                self.apply_cutout,
+                                self.input_size)
+            se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
+            se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose()
+        if 'audio' in self.modality:
+            if self.fps[vid_name] < 15:
+                audio = np.zeros((self.window_len, 200), dtype=np.float32)
+            else:
+                src_aud_fold = os.path.join(self.path, 'mel_spec', vid_name + '.npy')
+                audio = load_audio(src_aud_fold, start_frame, track_len)
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
-            inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T, H, W)
-            audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
-            se_features = np.pad(se_features, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T)
+            if 'visual' in self.modality:
+                inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T, H, W)
+                se_features = np.pad(se_features, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T)
+            if 'audio' in self.modality:
+                audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
             if self.split != 'test':
                 labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
+
         batch = {
-            'audio': torch.from_numpy(audio),
-            'video': torch.from_numpy(inputs),
-            'se_features': torch.from_numpy(se_features),
             'vid_name': vid_name,
             'start': start_frame,
             'length': track_len
         }
+        # add data
+        if 'video' in self.modality:
+            batch['video'] = torch.from_numpy(inputs)
+            batch['se_features'] = torch.from_numpy(se_features)
+        if 'audio' in self.modality:
+            batch['audio'] = torch.from_numpy(audio)
+        # add labels
         if self.split != 'test':
             batch['label_valence'] = torch.from_numpy(labels[..., 0])
             # discretize valence into categories

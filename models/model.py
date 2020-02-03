@@ -256,7 +256,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def train_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size)
+            dataset = AffWild2SequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality)
         else:
             # TODO: implement framewise
             raise NotImplementedError
@@ -269,7 +269,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def val_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size)
+            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
@@ -281,7 +281,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def test_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size)
+            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
