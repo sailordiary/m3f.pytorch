@@ -19,6 +19,10 @@ def main(hparams):
 
     # init module
     model = AffWild2VA(hparams)
+    if hparams.fusion_checkpoint:
+        checkpoint = torch.load(hparams.fusion_checkpoint, map_location=lambda storage, loc: storage)
+        model.load_state_dict(checkpoint, strict=False)
+        print ('Loaded pretrained weights for individual streams')
 
     trainer = Trainer(
         early_stop_callback=None,
@@ -38,6 +42,8 @@ if __name__ == '__main__':
     parser.add_argument('--gpus', type=str, default='2')
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--seed', type=int, default=12345)
+
+    parser.add_argument('--fusion_checkpoint', type=str, default='')
 
     # give the module a chance to add own params
     parser = AffWild2VA.add_model_specific_args(parser)

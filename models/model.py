@@ -263,14 +263,23 @@ class AffWild2VA(pl.LightningModule):
         return {}
 
     def configure_optimizers(self):
+        if self.hparams.train_fusion:
+            for param in self.parameters():
+                param.requires_grad = False
+            for param in self.fusion.parameters():
+                param.requires_grad = True
+            if self.hparams.fusion_type == 'attention':
+                for param in self.att_fuse.parameters():
+                    param.requires_grad = True
+
         if self.hparams.optimizer == 'adam':
-            optimizer = torch.optim.Adam(self.parameters(),
+            optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()),
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
             scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
             return [optimizer], [scheduler]
         elif self.hparams.optimizer == 'sgd':
-            optimizer = torch.optim.SGD(self.parameters(),
+            optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.parameters()),
                                         lr=self.hparams.learning_rate,
                                         momentum=0.9, weight_decay=5e-4)
             scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.5)
@@ -326,6 +335,7 @@ class AffWild2VA(pl.LightningModule):
 
         parser.add_argument('--modality', default='visual', type=str)
         parser.add_argument('--fusion_type', default='concat', type=str)
+        parser.add_argument('--train_fusion', action='store_true', default=False)
 
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
