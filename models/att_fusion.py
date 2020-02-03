@@ -12,8 +12,8 @@ class AttFusion(nn.Module):
         if self.use_proj:
             self.proj_v = nn.Linear(input_dim[1], input_dim[0])
 
-        self.scorer_a = GRU(input_dim, hidden_dim, 1, 1, 1)
-        self.scorer_v = GRU(input_dim, hidden_dim, 1, 1, 1)
+        self.scorer_a = GRU(input_dim[0], hidden_dim, 1, 1, 1)
+        self.scorer_v = GRU(input_dim[0], hidden_dim, 1, 1, 1)
 
     def forward(self, x_a, x_v):
         if self.use_proj:
