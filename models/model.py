@@ -87,11 +87,14 @@ class AffWild2VA(pl.LightningModule):
             x = (batch['video'] - 127.5) / 127.5
             # audiovisual
             if 'audio' in self.hparams.modality:
+                audio_feats = self.audio(batch['audio'])
+                video_feats = self.visual(x)
+                print (audio_feats.size(), video_feats.size())
                 if self.hparams.fusion_type == 'concat':
-                    features = torch.cat((self.audio(batch['audio']), self.visual(x)), dim=-1)
+                    features = torch.cat((audio_feats, video_feats), dim=-1)
                     return self.fusion(features)
                 elif self.hparams.fusion_type == 'attention':
-                    features = self.att_fuse(self.audio(batch['audio']), self.visual(x))
+                    features = self.att_fuse(audio_feats, video_feats)
                     features = self.fusion(features)
                     return features
             # visual
