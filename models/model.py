@@ -74,9 +74,9 @@ class AffWild2VA(pl.LightningModule):
             self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes, self.hparams.num_fc_layers)
         if self.hparams.modality == 'audiovisual':
             if self.hparams.fusion_type == 'concat':
-                self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
+                self.fusion = GRU(self.hparams.num_hidden * 2 * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
             elif self.hparams.fusion_type == 'attention':
-                self.att_fuse = AttFusion(self.hparams.num_hidden, 128)
+                self.att_fuse = AttFusion(self.hparams.num_hidden * 2, 128)
                 self.fusion = GRU(self.hparams.num_hidden, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
 
     def forward(self, batch):
