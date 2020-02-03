@@ -72,7 +72,7 @@ class AffWild2VA(pl.LightningModule):
         if 'audio' in self.hparams.modality:
             self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes, self.hparams.num_fc_layers)
         if self.hparams.modality == 'audiovisual':
-            self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2)
+            self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
 
     def forward(self, batch):
         if self.hparams.modality == 'audio':
