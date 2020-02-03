@@ -302,7 +302,7 @@ class AffWild2VA(pl.LightningModule):
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
             if self.hparams.test_lr:
-                self.lr_test = BatchExponentialLR(optimizer, 1, 200)
+                self.lr_test = BatchExponentialLR(optimizer, 0.01, 200)
                 return optimizer
             else:
                 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
@@ -311,8 +311,12 @@ class AffWild2VA(pl.LightningModule):
             optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.parameters()),
                                         lr=self.hparams.learning_rate,
                                         momentum=0.9, weight_decay=5e-4)
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.5)
-            return [optimizer], [scheduler]
+            if self.hparams.test_lr:
+                self.lr_test = BatchExponentialLR(optimizer, 0.01, 200)
+                return optimizer
+            else:
+                scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.5)
+                return [optimizer], [scheduler]
     
 
     @pl.data_loader
