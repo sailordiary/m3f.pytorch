@@ -4,6 +4,7 @@
 from .dataset import AffWild2SequenceDataset
 from .backbone import *
 from .rnn import GRU
+from .att_fusion import AttFusion
 from .utils import concordance_cc2, mse
 
 from argparse import ArgumentParser
@@ -72,7 +73,11 @@ class AffWild2VA(pl.LightningModule):
         if 'audio' in self.hparams.modality:
             self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes, self.hparams.num_fc_layers)
         if self.hparams.modality == 'audiovisual':
-            self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
+            if self.hparams.fusion_type == 'concat':
+                self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
+            elif self.hparams.fusion_type == 'attention':
+                self.att_fuse = AttFusion(self.hparams.num_hidden, 128)
+                self.fusion = GRU(self.hparams.num_hidden, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
 
     def forward(self, batch):
         if self.hparams.modality == 'audio':
@@ -82,8 +87,13 @@ class AffWild2VA(pl.LightningModule):
             x = (batch['video'] - 127.5) / 127.5
             # audiovisual
             if 'audio' in self.hparams.modality:
-                features = torch.cat((self.audio(batch['audio']), self.visual(x)), dim=-1)
-                return self.fusion(features)
+                if self.hparams.fusion_type == 'concat':
+                    features = torch.cat((self.audio(batch['audio']), self.visual(x)), dim=-1)
+                    return self.fusion(features)
+                elif self.hparams.fusion_type == 'attention':
+                    features = self.att_fuse(self.audio(batch['audio']), self.visual(x))
+                    features = self.fusion(features)
+                    return features
             # visual
             else:
                 return self.visual(x)
@@ -306,6 +316,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--backend', default='gru', type=str)
 
         parser.add_argument('--modality', default='visual', type=str)
+        parser.add_argument('--fusion_type', default='concat', type=str)
 
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
