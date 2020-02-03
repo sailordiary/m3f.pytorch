@@ -12,8 +12,11 @@ class GRU(nn.Module):
         super(GRU, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.num_classes = num_classes
         self.gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True, bidirectional=True)
-        self.fc = nn.Linear(hidden_size*2, num_classes)
+
+        if self.num_classes > 0:
+            self.fc = nn.Linear(hidden_size*2, num_classes)
 
         # init
         stdv = math.sqrt(2 / (input_size + hidden_size))
@@ -34,7 +37,8 @@ class GRU(nn.Module):
         # x_lens = torch.LongTensor(lens)
         # x = torch.nn.utils.rnn.pack_padded_sequence(x, x_lens, batch_first=True)
         out, _ = self.gru(x)
-        out = self.fc(out)  # predictions based on every time step
+        if self.num_classes > 0:
+            out = self.fc(out)  # predictions based on every time step
 
         return out
 

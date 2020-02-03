@@ -3,6 +3,7 @@
 #
 from .dataset import AffWild2SequenceDataset
 from .backbone import *
+from .rnn import GRU
 from .utils import concordance_cc2, mse
 
 from argparse import ArgumentParser
@@ -19,49 +20,74 @@ class AffWild2VA(pl.LightningModule):
     def __init__(self, hparams):
         super(AffWild2VA, self).__init__()
         self.hparams = hparams
-        if self.hparams.backbone == 'resnet':
-            self.visual = VA_3DResNet(
-                hiddenDim=self.hparams.num_hidden,
-                frameLen=self.hparams.window,
-                backend=self.hparams.backend,
-                resnet_ver='v1'
-            )
-        elif self.hparams.backbone == 'v2p':
-            self.visual = VA_3DVGGM(
-                hiddenDim=self.hparams.num_hidden,
-                frameLen=self.hparams.window,
-                backend=self.hparams.backend,
-                nClasses=5 if self.hparams.valence_loss == 'softmax' else 2
-            )
-        elif self.hparams.backbone == 'v2p_split':
-            self.visual = VA_3DVGGM_Split(
-                hiddenDim=self.hparams.num_hidden,
-                frameLen=self.hparams.window,
-                backend=self.hparams.backend,
-                split_layer=self.hparams.split_layer
-            )
-        elif self.hparams.backbone == 'densenet':
-            self.visual = VA_3DDenseNet(
-                hiddenDim=self.hparams.num_hidden,
-                frameLen=self.hparams.window,
-                backend=self.hparams.backend
-            )
-        elif self.hparams.backbone == 'vggface':
-            self.visual = VA_VGGFace(
-                hiddenDim=self.hparams.num_hidden,
-                frameLen=self.hparams.window,
-                backend=self.hparams.backend
-            )
 
-    def forward(self, x):
-        # normalize to [-1, 1]
-        x = (x - 127.5) / 127.5
-        return self.visual(x)
+        if self.hparams.modality == 'audiovisual':
+            rnn_fc_classes = -1
+        else:
+            rnn_fc_classes = 5 if self.hparams.valence_loss == 'softmax' else 2
+
+        if 'visual' in self.hparams.modality:
+            if self.hparams.backbone == 'resnet':
+                self.visual = VA_3DResNet(
+                    hiddenDim=self.hparams.num_hidden,
+                    frameLen=self.hparams.window,
+                    backend=self.hparams.backend,
+                    resnet_ver='v1',
+                    nClasses=rnn_fc_classes
+                )
+            elif self.hparams.backbone == 'v2p':
+                self.visual = VA_3DVGGM(
+                    hiddenDim=self.hparams.num_hidden,
+                    frameLen=self.hparams.window,
+                    backend=self.hparams.backend,
+                    nClasses=rnn_fc_classes
+                )
+            elif self.hparams.backbone == 'v2p_split':
+                self.visual = VA_3DVGGM_Split(
+                    hiddenDim=self.hparams.num_hidden,
+                    frameLen=self.hparams.window,
+                    backend=self.hparams.backend,
+                    split_layer=self.hparams.split_layer,
+                    nClasses=rnn_fc_classes
+                )
+            elif self.hparams.backbone == 'densenet':
+                self.visual = VA_3DDenseNet(
+                    hiddenDim=self.hparams.num_hidden,
+                    frameLen=self.hparams.window,
+                    backend=self.hparams.backend,
+                    nClasses=rnn_fc_classes
+                )
+            elif self.hparams.backbone == 'vggface':
+                self.visual = VA_VGGFace(
+                    hiddenDim=self.hparams.num_hidden,
+                    frameLen=self.hparams.window,
+                    backend=self.hparams.backend,
+                    nClasses=rnn_fc_classes
+                )
+        if 'audio' in self.hparams.modality:
+            self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes)
+        if self.hparams.modality == 'audiovisual':
+            self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2)
+
+    def forward(self, batch):
+        if self.hparams.modality == 'audio':
+            return self.audio(batch['audio'])
+        else:
+            # normalize video to [-1, 1]
+            x = (batch['video'] - 127.5) / 127.5
+            # audiovisual
+            if 'audio' in self.hparams.modality:
+                features = torch.cat((self.audio(batch['audio']), self.visual(x)), dim=-1)
+                return self.fusion(features)
+            # visual
+            else:
+                return self.visual(x)
     
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
     
     def bce_loss(self, y_hat, y):
+        # to classify the sign of y_hat
         return F.binary_cross_entropy_with_logits(y_hat.view(-1), (y.view(-1) > 0).float())
     
     def ce_loss(self, y_hat, y):
@@ -71,10 +97,9 @@ class AffWild2VA(pl.LightningModule):
         return F.mse_loss(y_hat, y)
     
     def training_step(self, batch, batch_idx):
-        x = batch['video']
         arousal = batch['label_arousal']
         
-        y_hat = self.forward(x)
+        y_hat = self.forward(batch)
         if self.hparams.valence_loss == 'softmax':
             valence_hat, arousal_hat = y_hat[..., :4], y_hat[..., -1]
             valence = batch['class_valence']
@@ -100,8 +125,7 @@ class AffWild2VA(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         v, a, v_hat, a_hat = [], [], [], []
         
-        x = batch['video']
-        y_hat = self.forward(x).cpu()
+        y_hat = self.forward(batch).cpu()
         valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
         lens = batch['length']
 
@@ -275,6 +299,8 @@ class AffWild2VA(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser])
         parser.add_argument('--backbone', default='v2p', type=str)
         parser.add_argument('--backend', default='gru', type=str)
+
+        parser.add_argument('--modality', default='visual', type=str)
 
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
