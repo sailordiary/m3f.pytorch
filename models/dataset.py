@@ -244,7 +244,7 @@ class AffWild2SequenceDataset(Dataset):
             'length': track_len
         }
         # add data
-        if 'video' in self.modality:
+        if 'visual' in self.modality:
             batch['video'] = torch.from_numpy(inputs)
             batch['se_features'] = torch.from_numpy(se_features)
         if 'audio' in self.modality:
