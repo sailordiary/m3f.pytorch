@@ -82,6 +82,8 @@ class AffWild2VA(pl.LightningModule):
                 self.att_fuse = AttFusion([self.hparams.num_hidden * 2, self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4)], 128)
                 self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
 
+        self.history = {'lr': [], 'loss': []}
+
     def forward(self, batch):
         if self.hparams.modality == 'audio':
             return self.audio(batch['audio'])
@@ -136,8 +138,14 @@ class AffWild2VA(pl.LightningModule):
         log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
 
         if self.hparams.test_lr:
-            self.lr_test.step()
-            lr = self.lr_test.get_lr()[0]
+            if batch_idx == 1000:
+                print ('Saved lr plot')
+                plot_lr(self.history)
+            elif batch_idx < 1000:
+                self.lr_test.step()
+                lr = self.lr_test.get_lr()[0]
+                self.history['lr'].append(lr)
+                self.history['loss'].append(loss)
 
         if self.hparams.loss == 'mtl':
             mask = batch['expr_valid']
@@ -153,19 +161,12 @@ class AffWild2VA(pl.LightningModule):
                 num_corrects = torch.sum(max_class[mask_tile] == expr.view(-1)[mask_tile]).item()
                 acc = num_corrects / valid_items
                 progress_dict['acc_expr'] = acc
-        
-        ret = {'loss': loss, 'progress_bar': progress_dict, 'log': log_dict}
-        if self.hparams.test_lr: ret['lr'] = lr
 
-        return ret
-
-    def training_end(self, outputs):
-        if self.hparams.test_lr:
-            history = {}
-            history['lr'] = [x['lr'] for x in outputs]
-            history['loss'] = [x['loss'] for x in outputs]
-            plot_lr(history)
-        return {}
+        return {
+            'loss': loss,
+            'progress_bar': progress_dict,
+            'log': log_dict
+        }
 
     def validation_step(self, batch, batch_idx):
         v, a, v_hat, a_hat = [], [], [], []
