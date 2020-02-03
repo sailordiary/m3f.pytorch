@@ -105,32 +105,36 @@ class AffWild2VA(pl.LightningModule):
         # to classify the sign of y_hat
         return F.binary_cross_entropy_with_logits(y_hat.view(-1), (y.view(-1) > 0).float())
     
-    def ce_loss(self, y_hat, y):
-        return F.cross_entropy(y_hat.view(-1, y_hat.size(-1)), y.view(-1))
+    def ce_loss(self, y_hat, y, mask):
+        loss = F.cross_entropy(y_hat.view(-1, y_hat.size(-1)), y.view(-1), reduction='none')
+        return (loss * mask.view(-1)).mean()
     
     def mse_loss(self, y_hat, y):
         return F.mse_loss(y_hat, y)
     
     def training_step(self, batch, batch_idx):
         arousal = batch['label_arousal']
+        valence = batch['label_valence']
         
         y_hat = self.forward(batch)
-        if self.hparams.valence_loss == 'softmax':
-            valence_hat, arousal_hat = y_hat[..., :4], y_hat[..., -1]
-            valence = batch['class_valence']
-            loss_v = self.ce_loss(valence_hat, valence)
-        elif self.hparams.valence_loss == 'ccc':
-            valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
-            valence = batch['label_valence']
-            loss_v = self.ccc_loss(valence_hat, valence)
+        valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
+
+        loss_v = self.ccc_loss(valence_hat, valence)
         loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
         
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
-        if self.hparams.valence_loss == 'softmax':
-            max_class = torch.argmax(valence_hat, dim=-1)
-            correct = torch.sum(max_class.view(-1) == valence.view(-1)).item() / (valence.size(0) * valence.size(1))
-            progress_dict['acc_v'] = correct
+        if self.hparams.loss == 'mtl':
+            expr_hat, expr, mask = y_hat[..., :7], batch['class_expr'], batch['expr_valid']
+            loss_expr = self.ce_loss(expr_hat, expr, mask)
+            progress_dict['loss_expr'] = loss_expr
+            loss += loss_expr
+            max_class = torch.argmax(expr_hat, dim=-1).view(-1)
+            mask_tile = mask.view(-1)
+            valid_items = mask_tile.sum()
+            if valid_items > 0:
+                correct = torch.sum(max_class[mask_tile] == expr.view(-1)[mask_tile]).item() / valid_items
+                progress_dict['acc_v'] = correct
         return {
             'loss': loss,
             'progress_bar': progress_dict,
@@ -141,7 +145,7 @@ class AffWild2VA(pl.LightningModule):
         v, a, v_hat, a_hat = [], [], [], []
         
         y_hat = self.forward(batch).cpu()
-        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
+        valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
         lens = batch['length']
 
         bs = lens.size(0)
@@ -217,7 +221,7 @@ class AffWild2VA(pl.LightningModule):
         
         x = batch['video']
         y_hat = self.forward(x).cpu()
-        valence_hat, arousal_hat = y_hat[..., 0], y_hat[..., 1]
+        valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
         lens = batch['length']
 
         bs = lens.size(0)
@@ -326,7 +330,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
 
-        parser.add_argument('--valence_loss', default='ccc', type=str)
+        parser.add_argument('--loss', default='ccc', type=str)
         parser.add_argument('--loss_lambda', default=0.346, type=float)
         parser.add_argument('--num_hidden', default=512, type=int)
         parser.add_argument('--split_layer', default=5, type=int)

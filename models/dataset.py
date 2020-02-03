@@ -145,10 +145,15 @@ class AffWild2SequenceDataset(Dataset):
                     self.sample_src.append((i, j * self.window_len))
         if self.split != 'test':
             self.labels = {}
+            self.labels_expr = {}
+            fold_map = {'train': 'Training_Set', 'val': 'Validation_Set'}
             for vid_name in self.files:
                 # valence, arousal
-                lines = open(os.path.join(self.path, 'annotation', self.split, vid_name + '.txt'), 'r').read().splitlines()
+                lines = open(os.path.join(self.path, 'annotations', 'VA_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
                 self.labels[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
+            for vid_name in open('splits/expr.csv', 'r').read().splitlines():
+                lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
+                self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
         if self.split == 'train':
             self.avail_windows = self.get_available_windows()
         
@@ -191,6 +196,8 @@ class AffWild2SequenceDataset(Dataset):
             vid_name = self.files[vid_idx]
             track_len = min(self.window_len, self.nb_frames[vid_name] - start_frame)
         
+        has_expr = vid_name in self.labels_expr.keys()
+
         # note that frame indices in filenames begin with 1
         if 'visual' in self.modality:
             is_training = self.split == 'train'
@@ -212,6 +219,11 @@ class AffWild2SequenceDataset(Dataset):
         
         if self.split != 'test':
             labels = self.labels[vid_name][start_frame: start_frame + track_len]
+            if has_expr:
+                expr_labels = self.labels_expr[vid_name][start_frame: start_frame + track_len]
+            else:
+                expr_labels = np.zeros(track_len, dtype=np.int64)
+            expr_valid = np.array([has_expr] * track_len) & (expr_labels >= 0)
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
@@ -222,6 +234,8 @@ class AffWild2SequenceDataset(Dataset):
                 audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
             if self.split != 'test':
                 labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
+                expr_labels = np.pad(expr_labels, ((0, to_pad), (0, 0)), 'edge')
+                expr_valid = np.pad(expr_valid, ((0, to_pad), (0, 0)), 'edge')
 
         batch = {
             'vid_name': vid_name,
@@ -237,10 +251,8 @@ class AffWild2SequenceDataset(Dataset):
         # add labels
         if self.split != 'test':
             batch['label_valence'] = torch.from_numpy(labels[..., 0])
-            # discretize valence into categories
-            bins = np.linspace(-1, 1, 4, endpoint=False)
-            class_labels = np.digitize(labels[..., 0], bins) - 1
-            batch['class_valence'] = torch.from_numpy(class_labels)
+            batch['class_expr'] = expr_labels
+            batch['expr_valid'] = expr_valid
             batch['label_arousal'] = torch.from_numpy(labels[..., 1])
         
         return batch
