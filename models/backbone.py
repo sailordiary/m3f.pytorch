@@ -153,7 +153,7 @@ class VA_3DVGGM(nn.Module):
 
 
 class VA_3DVGGM_Split(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, backend='gru', norm_layer='bn', split_layer=5, nFCs):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, backend='gru', norm_layer='bn', split_layer=5, nFCs=1):
         super(VA_3DVGGM_Split, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
