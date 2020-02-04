@@ -318,7 +318,7 @@ class AffWild2VA(pl.LightningModule):
             return optimizer
         else:
             if self.hparams.scheduler == 'cyclic':
-                self.cyclic_scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, self.hparams.learning_rate, self.hparams.max_lr, 4000)
+                self.cyclic_scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, self.hparams.learning_rate, self.hparams.max_lr, step_size_up=4000, cycle_momentum=self.hparams.optimizer == 'sgd')
                 return optimizer
             elif self.hparams.scheduler == 'exp':
                 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
