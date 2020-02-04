@@ -146,7 +146,6 @@ class AffWild2VA(pl.LightningModule):
                 plot_lr(self.history)
                 print ('Saved lr plot')
             elif batch_idx < LR_TEST_STEPS:
-                self.lr_test.step()
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
                 if batch_idx == 0:
@@ -176,6 +175,8 @@ class AffWild2VA(pl.LightningModule):
         }
     
     def on_batch_end(self):
+        if self.hparams.test_lr:
+            self.lr_test.step()
         if self.hparams.scheduler == 'cyclic':
             self.cyclic_scheduler.step()
 
