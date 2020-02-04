@@ -18,6 +18,10 @@ from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 
 
+LR_TEST_MAX_LR = 0.01
+LR_TEST_STEPS = 800
+
+
 class AffWild2VA(pl.LightningModule):
     
     def __init__(self, hparams):
@@ -138,10 +142,10 @@ class AffWild2VA(pl.LightningModule):
         log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
 
         if self.hparams.test_lr:
-            if batch_idx == 200:
-                print ('Saved lr plot')
+            if batch_idx == LR_TEST_STEPS:
                 plot_lr(self.history)
-            elif batch_idx < 200:
+                print ('Saved lr plot')
+            elif batch_idx < LR_TEST_STEPS:
                 self.lr_test.step()
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
@@ -170,6 +174,10 @@ class AffWild2VA(pl.LightningModule):
             'progress_bar': progress_dict,
             'log': log_dict
         }
+    
+    def on_batch_end(self):
+        if self.hparams.scheduler == 'cyclic':
+            self.cyclic_scheduler.step()
 
     def validation_step(self, batch, batch_idx):
         v, a, v_hat, a_hat = [], [], [], []
@@ -301,24 +309,24 @@ class AffWild2VA(pl.LightningModule):
             optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()),
                                          lr=self.hparams.learning_rate,
                                          weight_decay=1e-4)
-            if self.hparams.test_lr:
-                self.lr_test = BatchExponentialLR(optimizer, 0.01, 200)
-                return optimizer
-            else:
-                scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
-                return [optimizer], [scheduler]
         elif self.hparams.optimizer == 'sgd':
             optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, self.parameters()),
                                         lr=self.hparams.learning_rate,
                                         momentum=0.9, weight_decay=5e-4)
-            if self.hparams.test_lr:
-                self.lr_test = BatchExponentialLR(optimizer, 0.01, 200)
+        if self.hparams.test_lr:
+            self.lr_test = BatchExponentialLR(optimizer, LR_TEST_MAX_LR, LR_TEST_STEPS)
+            return optimizer
+        else:
+            if self.hparams.scheduler == 'cyclic':
+                self.cyclic_scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, self.hparams.learning_rate, self.hparams.max_lr, 4000)
                 return optimizer
-            else:
-                scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[30,80], gamma=0.5)
+            elif self.hparams.scheduler == 'exp':
+                scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
+                return [optimizer], [scheduler]
+            elif self.hparams.scheduler == 'plateau':
+                scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=self.hparams.decay_factor, patience=3, verbose=True, min_lr=1e-6)
                 return [optimizer], [scheduler]
     
-
     @pl.data_loader
     def train_dataloader(self):
         if self.hparams.mode == 'video':
@@ -373,10 +381,13 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
         parser.add_argument('--windows_per_epoch', default=200, type=int)
-        parser.add_argument('--learning_rate', default=0.0002, type=float)
+
+        parser.add_argument('--learning_rate', default=5e-5, type=float)
+        parser.add_argument('--max_lr', default=0.0001, type=float)
         parser.add_argument('--decay_factor', default=0.5, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
+        parser.add_argument('--scheduler', default='plateau', type=str)
 
         parser.add_argument('--test_lr', action='store_true', default=False)
 
