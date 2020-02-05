@@ -2,10 +2,11 @@
 ---   
 <div align="center">    
  
-# Aff-Wild2 Valence-Arousal Estimation Model Zoo
+# M³L: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation
 
 [![Paper](http://img.shields.io/badge/paper-arxiv.XXXX.YYYY-B31B1B.svg)](https://arxiv.org)
-[![Conference](http://img.shields.io/badge/FG-2020-4b44ce.svg)](https://fg2020.org/)  
+[![Conference Workshop](http://img.shields.io/badge/FG-2020-4b44ce.svg)](https://ibug.doc.ic.ac.uk/resources/affect-recognition-wild-unimulti-modal-analysis-va/) 
+[![Challenge](http://img.shields.io/badge/ABAW-2020-4b44ce.svg)](https://ibug.doc.ic.ac.uk/resources/fg-2020-competition-affective-behavior-analysis/)   
 </div>
  
 ## Description   
@@ -23,7 +24,7 @@ You can download our cropped images from here: [TODO]
 TODO
 
 ## Results    
-TODO
+Aff-Wild2 Valence-Arousal Estimation Model Zoo:
 
 ### Citation   
 ```
