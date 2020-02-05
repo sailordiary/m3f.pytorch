@@ -160,7 +160,7 @@ class AffWild2VA(pl.LightningModule):
         if 'mtl' in self.hparams.loss:
             # expression branch
             mask_expr = batch['expr_valid']
-            mask_expr_tile = mask.view(-1)
+            mask_expr_tile = mask_expr.view(-1)
             valid_expr = torch.sum(mask_expr_tile.long()).item()
             if valid_expr > 0:
                 expr_hat, expr = y_hat[..., :7], batch['class_expr']
