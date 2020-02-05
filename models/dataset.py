@@ -144,17 +144,24 @@ class AffWild2SequenceDataset(Dataset):
                 for j in range(self.nb_frames[vid_name] // self.window_len):
                     self.sample_src.append((i, j * self.window_len))
         if self.split != 'test':
-            self.labels = {}
-            self.labels_expr = {}
+            self.labels_va, self.labels_expr, self.labels_au = {}, {}, {}
             fold_map = {'train': 'Training_Set', 'val': 'Validation_Set'}
             for vid_name in self.files:
-                # valence, arousal
                 lines = open(os.path.join(self.path, 'annotations', 'VA_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
-                self.labels[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
+                # T * 2
+                self.labels_va[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
+            # load expression labels
             for l in open('splits/expr.csv', 'r').read().splitlines():
                 vid_name, expr_split = l.split(',')
                 lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', expr_split, vid_name + '.txt'), 'r').read().splitlines()
+                # T * 1
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
+            # load AU labels
+            for l in open('splits/au.csv', 'r').read().splitlines():
+                vid_name, au_split = l.split(',')
+                lines = open(os.path.join(self.path, 'annotations', 'AU_Set', au_split, vid_name + '.txt'), 'r').read().splitlines()
+                # T * 8
+                self.labels_au[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.int64)
         if self.split == 'train':
             self.avail_windows = self.get_available_windows()
         
@@ -168,7 +175,7 @@ class AffWild2SequenceDataset(Dataset):
         if self.modality == 'audio':
             # audio only
             for vid_name in tqdm(self.files, desc='Scanning available windows'):
-                has_label = np.max(np.abs(self.labels[vid_name]), axis=1) <= 1
+                has_label = np.max(np.abs(self.labels_va[vid_name]), axis=1) <= 1
                 avail_ranges = one_runs(has_label)
                 for w_st, w_ed in avail_ranges:
                     windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
@@ -176,8 +183,8 @@ class AffWild2SequenceDataset(Dataset):
             # visual and audiovisual
             for vid_name in tqdm(self.files, desc='Scanning available windows'):
                 src_fold = os.path.join(self.base, vid_name)
-                has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels[vid_name]))])
-                has_label = np.max(np.abs(self.labels[vid_name]), axis=1) <= 1
+                has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels_va[vid_name]))])
+                has_label = np.max(np.abs(self.labels_va[vid_name]), axis=1) <= 1
                 avail_ranges = one_runs(has_image & has_label)
                 for w_st, w_ed in avail_ranges:
                     windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
@@ -197,20 +204,20 @@ class AffWild2SequenceDataset(Dataset):
             vid_name = self.files[vid_idx]
             track_len = min(self.window_len, self.nb_frames[vid_name] - start_frame)
         
-        has_expr = vid_name in self.labels_expr.keys()
-
         # note that frame indices in filenames begin with 1
         if 'visual' in self.modality:
             is_training = self.split == 'train'
             src_vid_fold = os.path.join(self.base, vid_name)
             inputs = load_video(src_vid_fold, start_frame, track_len,
-                                self.split == 'train',
+                                is_training,
                                 random.random() > 0.5,
                                 self.release == 'vipl',
                                 self.apply_cutout,
                                 self.input_size)
             se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
-            se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose()
+            se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose() # 512 * T
+            au_path = os.path.join(self.path, 'AU_features', vid_name + '.npy')
+            au_features = np.load(au_path)[start_frame: start_frame + track_len].transpose() # 256 * T
         if 'audio' in self.modality:
             if self.fps[vid_name] < 15:
                 audio = np.zeros((self.window_len, 200), dtype=np.float32)
@@ -219,26 +226,36 @@ class AffWild2SequenceDataset(Dataset):
                 audio = load_audio(src_aud_fold, start_frame, track_len)
         
         if self.split != 'test':
-            labels = self.labels[vid_name][start_frame: start_frame + track_len]
+            va_labels = self.labels_va[vid_name][start_frame: start_frame + track_len]
+            has_expr = vid_name in self.labels_expr.keys()
             if has_expr:
                 expr_labels = self.labels_expr[vid_name][start_frame: start_frame + track_len]
             else:
                 expr_labels = np.zeros(track_len, dtype=np.int64)
             expr_valid = np.array([has_expr] * track_len) & (expr_labels >= 0)
-            # prune invalid labels, which count towards CE
-            expr_labels = np.clip(expr_labels, 0, 6)
+            expr_labels = np.clip(expr_labels, 0, 6) # prune invalid labels: 0 <= class_id <= 6
+            has_au = vid_name in self.labels_au.keys()
+            if has_au:
+                au_labels = self.labels_au[vid_name][start_frame: start_frame + track_len]
+            else:
+                au_labels = np.zeros((track_len, 8), dtype=np.int64)
+            au_valid = np.array([has_au] * track_len) & (np.min(au_labels) >= 0)
+            au_labels = np.clip(au_labels, 0, 1)
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
             if 'visual' in self.modality:
                 inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T, H, W)
-                se_features = np.pad(se_features, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T)
+                se_features = np.pad(se_features, ((0, 0), (0, to_pad)), 'edge') # (C, T)
+                au_features = np.pad(au_features, ((0, 0), (0, to_pad)), 'edge') # (C, T)
             if 'audio' in self.modality:
                 audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
             if self.split != 'test':
-                labels = np.pad(labels, ((0, to_pad), (0, 0)), 'edge')
+                va_labels = np.pad(va_labels, ((0, to_pad), (0, 0)), 'edge')
                 expr_labels = np.pad(expr_labels, ((0, to_pad)), 'edge')
+                au_labels = np.pad(au_labels, ((0, to_pad), (0, 0)), 'edge')
                 expr_valid = np.pad(expr_valid, ((0, to_pad)), 'edge')
+                au_valid = np.pad(au_valid, ((0, to_pad)), 'edge')
 
         batch = {
             'vid_name': vid_name,
@@ -249,14 +266,17 @@ class AffWild2SequenceDataset(Dataset):
         if 'visual' in self.modality:
             batch['video'] = torch.from_numpy(inputs)
             batch['se_features'] = torch.from_numpy(se_features)
+            batch['au_features'] = torch.from_numpy(au_features)
         if 'audio' in self.modality:
             batch['audio'] = torch.from_numpy(audio)
         # add labels
         if self.split != 'test':
-            batch['label_valence'] = torch.from_numpy(labels[..., 0])
+            batch['label_valence'] = torch.from_numpy(va_labels[..., 0])
             batch['class_expr'] = expr_labels
             batch['expr_valid'] = expr_valid
-            batch['label_arousal'] = torch.from_numpy(labels[..., 1])
+            batch['class_au'] = au_labels
+            batch['au_valid'] = au_valid
+            batch['label_arousal'] = torch.from_numpy(va_labels[..., 1])
         
         return batch
 
