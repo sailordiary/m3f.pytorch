@@ -112,9 +112,9 @@ class AffWild2VA(pl.LightningModule):
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
     
-    def bce_loss(self, y_hat, y):
-        # to classify the sign of y_hat
-        return F.binary_cross_entropy_with_logits(y_hat.view(-1), (y.view(-1) > 0).float())
+    def bce_loss(self, y_hat, y, mask):
+        loss = F.binary_cross_entropy_with_logits(y_hat.view(-1), y.view(-1), reduction='none')
+        return (loss * mask.view(-1).float()).mean()
     
     def ce_loss(self, y_hat, y, mask):
         loss = F.cross_entropy(y_hat.view(-1, y_hat.size(-1)), y.view(-1), reduction='none')
@@ -134,9 +134,10 @@ class AffWild2VA(pl.LightningModule):
             loss_v = self.mse_loss(valence_hat, valence)
             loss_a = self.mse_loss(arousal_hat, arousal)
         else:
+            assert 'ccc' is self.hparams.loss, 'invalid loss specification'
             loss_v = self.ccc_loss(valence_hat, valence)
             loss_a = self.ccc_loss(arousal_hat, arousal)
-        loss = self.hparams.loss_lambda * loss_v + (1-self.hparams.loss_lambda) * loss_a
+        loss = self.hparams.loss_lambda * loss_v + (1 - self.hparams.loss_lambda) * loss_a
 
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
@@ -153,19 +154,34 @@ class AffWild2VA(pl.LightningModule):
                 self.history['loss'].append(loss)
 
         if 'mtl' in self.hparams.loss:
-            mask = batch['expr_valid']
-            mask_tile = mask.view(-1)
-            valid_items = torch.sum(mask_tile.long()).item()
-            if valid_items > 0:
+            # expression branch
+            mask_expr = batch['expr_valid']
+            mask_expr_tile = mask.view(-1)
+            valid_expr = torch.sum(mask_expr_tile.long()).item()
+            if valid_expr > 0:
                 expr_hat, expr = y_hat[..., :7], batch['class_expr']
-                loss_expr = self.ce_loss(expr_hat, expr, mask)
+                loss_expr = self.ce_loss(expr_hat, expr, mask_expr)
                 loss += loss_expr
                 log_dict['loss_expr'] = loss_expr
                 progress_dict['loss_expr'] = loss_expr
-                max_class = torch.argmax(expr_hat, dim=-1).view(-1)
-                num_corrects = torch.sum(max_class[mask_tile] == expr.view(-1)[mask_tile]).item()
-                acc = num_corrects / valid_items
-                progress_dict['acc_expr'] = acc
+                max_expr_class = torch.argmax(expr_hat, dim=-1).view(-1)
+                acc_expr = torch.sum(max_expr_class[mask_expr_tile] == expr.view(-1)[mask_expr_tile]).item() / valid_expr
+                progress_dict['acc_expr'] = acc_expr
+            # AU detection branch
+            mask_au = batch['au_valid']
+            mask_au_tile = mask_au.view(-1)
+            valid_au = torch.sum(mask_au_tile.long()).item()
+            if valid_au > 0:
+                au_hat, au = y_hat[..., -10:-2], batch['class_au']
+                loss_au = 0
+                for i in range(8):
+                    loss_au += self.bce_loss(au_hat[..., i], au[:, i], mask_au)
+                    max_class = torch.argmax(au_hat[..., i], dim=-1).view(-1)
+                    acc = torch.sum(au_hat[..., i][mask_au_tile] == au[:, i].view(-1)[mask_au_tile]).item() / valid_au
+                    progress_dict['acc_au{}'.format(i+1)] = acc
+                loss += loss_au
+                log_dict['loss_au'] = loss_au
+                progress_dict['loss_au'] = loss_au
 
         return {
             'loss': loss,
@@ -392,7 +408,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--test_lr', action='store_true', default=False)
 
         parser.add_argument('--loss', default='ccc', type=str)
-        parser.add_argument('--loss_lambda', default=0.346, type=float)
+        parser.add_argument('--loss_lambda', default=0.5, type=float)
         parser.add_argument('--num_hidden', default=512, type=int)
         parser.add_argument('--split_layer', default=5, type=int)
         parser.add_argument('--num_fc_layers', default=1, type=int)
