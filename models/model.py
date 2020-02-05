@@ -31,7 +31,7 @@ class AffWild2VA(pl.LightningModule):
         if self.hparams.modality == 'audiovisual':
             rnn_fc_classes = -1
         else:
-            rnn_fc_classes = 7 + 2 if self.hparams.loss == 'mtl' else 2
+            rnn_fc_classes = 7 + 2 if 'mtl' in self.hparams.loss else 2
 
         if 'visual' in self.hparams.modality:
             if self.hparams.backbone == 'resnet':
