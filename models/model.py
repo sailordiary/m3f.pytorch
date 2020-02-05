@@ -138,7 +138,7 @@ class AffWild2VA(pl.LightningModule):
             loss_v = self.mse_loss(valence_hat, valence)
             loss_a = self.mse_loss(arousal_hat, arousal)
         else:
-            assert 'ccc' is self.hparams.loss, 'invalid loss specification'
+            assert 'ccc' in self.hparams.loss, 'invalid loss specification'
             loss_v = self.ccc_loss(valence_hat, valence)
             loss_a = self.ccc_loss(arousal_hat, arousal)
         loss = self.hparams.loss_lambda * loss_v + (1 - self.hparams.loss_lambda) * loss_a
