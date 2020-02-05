@@ -411,7 +411,7 @@ class AffWild2VA(pl.LightningModule):
 
         parser.add_argument('--test_lr', action='store_true', default=False)
 
-        parser.add_argument('--loss', default='ccc', type=str)
+        parser.add_argument('--loss', default='ccc_mtl', type=str)
         parser.add_argument('--loss_lambda', default=0.5, type=float)
         parser.add_argument('--num_hidden', default=512, type=int)
         parser.add_argument('--split_layer', default=5, type=int)
