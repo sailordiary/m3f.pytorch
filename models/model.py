@@ -28,10 +28,13 @@ class AffWild2VA(pl.LightningModule):
         super(AffWild2VA, self).__init__()
         self.hparams = hparams
 
+        use_mtl = 'mtl' in self.hparams.loss
+        fc_outputs = 7 + 8 + 2 if use_mtl else 2
         if self.hparams.modality == 'audiovisual':
             rnn_fc_classes = -1
         else:
-            rnn_fc_classes = 7 + 2 if 'mtl' in self.hparams.loss else 2
+            # Expr, AU, VA
+            rnn_fc_classes = fc_outputs
 
         if 'visual' in self.hparams.modality:
             if self.hparams.backbone == 'resnet':
@@ -58,7 +61,8 @@ class AffWild2VA(pl.LightningModule):
                     backend=self.hparams.backend,
                     split_layer=self.hparams.split_layer,
                     nClasses=rnn_fc_classes,
-                    nFCs=self.hparams.num_fc_layers
+                    nFCs=self.hparams.num_fc_layers,
+                    use_mtl=use_mtl
                 )
             elif self.hparams.backbone == 'densenet':
                 self.visual = VA_3DDenseNet(
@@ -81,10 +85,10 @@ class AffWild2VA(pl.LightningModule):
         if self.hparams.modality == 'audiovisual':
             if self.hparams.fusion_type == 'concat':
                 self.fusion = GRU(self.hparams.num_hidden * 2 + self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4),
-                    self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
+                    self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
             elif self.hparams.fusion_type == 'attention':
                 self.att_fuse = AttFusion([self.hparams.num_hidden * 2, self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4)], 128)
-                self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, 2, self.hparams.num_fc_layers)
+                self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
 
         self.history = {'lr': [], 'loss': []}
 

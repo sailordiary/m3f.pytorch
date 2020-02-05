@@ -153,7 +153,7 @@ class VA_3DVGGM(nn.Module):
 
 
 class VA_3DVGGM_Split(nn.Module):
-    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, nClasses=2, backend='gru', norm_layer='bn', split_layer=5, nFCs=1):
+    def __init__(self, inputDim=512, hiddenDim=512, nLayers=2, frameLen=16, nClasses=2, backend='gru', norm_layer='bn', split_layer=5, nFCs=1, use_mtl=False):
         super(VA_3DVGGM_Split, self).__init__()
         self.inputDim = inputDim
         self.hiddenDim = hiddenDim
@@ -164,6 +164,7 @@ class VA_3DVGGM_Split(nn.Module):
         self.split_layer = split_layer
         self.norm_layer = norm_layer
         self.nFCs = nFCs
+        self.use_mtl = use_mtl
 
         assert split_layer >= 2, 'degenerate multi-tower structure'
         shared = [
@@ -187,10 +188,14 @@ class VA_3DVGGM_Split(nn.Module):
         # backend
         if self.backend == 'gru':
             if split_layer == 5:
-                self.gru = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
+                self.gru = GRU(self.inputDim + 512 + 256, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
             else:
-                self.gru_v = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses // 2, self.nFCs)
-                self.gru_a = GRU(self.inputDim, self.hiddenDim, self.nLayers, self.nClasses // 2, self.nFCs)
+                if self.use_mtl:
+                    self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 7 + 1, self.nFCs)
+                    self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 8 + 1, self.nFCs)
+                else:
+                    self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                    self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
 
         # initialize
         self._initialize_weights()
@@ -235,7 +240,11 @@ class VA_3DVGGM_Split(nn.Module):
             if self.backend == 'gru':
                 x_v = self.gru_v(x_v.transpose(1, 2))
                 x_a = self.gru_a(x_a.transpose(1, 2))
-                return torch.cat((x_v, x_a), dim=-1)
+                if self.use_mtl:
+                    # Expr, AU, VA
+                    return torch.cat((x_v[:, :7], x_a[:, :8], x_v[:, -1], x_a[:, :-1]))
+                else:
+                    return torch.cat((x_v, x_a), dim=-1)
         else:
             x = x.squeeze()
             x = torch.cat((x, se, au), dim=1)
