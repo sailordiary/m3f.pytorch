@@ -132,7 +132,11 @@ class AffWild2VA(pl.LightningModule):
         valence = batch['label_valence']
         
         y_hat = self.forward(batch)
-        valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
+        if 'mtl' in self.hparams.loss:
+            # y = (x_v: Expr(6), V; x_a: AU(8), A)
+            valence_hat, arousal_hat = y_hat[..., 7], y_hat[..., -1]
+        else:
+            valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
 
         if 'mse' in self.hparams.loss:
             loss_v = self.mse_loss(valence_hat, valence)
@@ -176,7 +180,7 @@ class AffWild2VA(pl.LightningModule):
             mask_au_tile = mask_au.view(-1)
             valid_au = torch.sum(mask_au_tile.long()).item()
             if valid_au > 0:
-                au_hat, au = y_hat[..., -10:-2], batch['class_au']
+                au_hat, au = y_hat[..., 8: 16], batch['class_au']
                 loss_au = 0
                 for i in range(8):
                     loss_au += self.bce_loss(au_hat[..., i], au[:, i], mask_au)

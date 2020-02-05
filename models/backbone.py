@@ -240,11 +240,7 @@ class VA_3DVGGM_Split(nn.Module):
             if self.backend == 'gru':
                 x_v = self.gru_v(x_v.transpose(1, 2))
                 x_a = self.gru_a(x_a.transpose(1, 2))
-                if self.use_mtl:
-                    # Expr, AU, VA
-                    return torch.cat((x_v[..., :7], x_a[..., :8], x_v[..., -2: -1], x_a[..., -2: -1]), dim=-1)
-                else:
-                    return torch.cat((x_v, x_a), dim=-1)
+                return torch.cat((x_v, x_a), dim=-1)
         else:
             x = x.squeeze()
             x = torch.cat((x, se, au), dim=1)
