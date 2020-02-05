@@ -19,7 +19,7 @@ import pytorch_lightning as pl
 
 
 LR_TEST_MAX_LR = 0.01
-LR_TEST_STEPS = 800
+LR_TEST_STEPS = 400
 
 
 class AffWild2VA(pl.LightningModule):
@@ -188,9 +188,9 @@ class AffWild2VA(pl.LightningModule):
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
                 if batch_idx != 0: # smoothing
-                    self.history['loss'].append(0.05 * loss + 0.95 * self.history['loss'][-1])
+                    self.history['loss'].append(0.05 * loss.item() + 0.95 * self.history['loss'][-1])
                 else:
-                    self.history['loss'].append(loss)
+                    self.history['loss'].append(loss.item())
 
         return {
             'loss': loss,
