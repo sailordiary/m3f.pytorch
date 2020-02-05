@@ -2,7 +2,7 @@
 ---   
 <div align="center">    
  
-# M³L: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation
+# ___M___³L: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation
 
 [![Paper](http://img.shields.io/badge/paper-arxiv.XXXX.YYYY-B31B1B.svg)](https://arxiv.org)
 [![Conference Workshop](http://img.shields.io/badge/FG-2020-4b44ce.svg)](https://ibug.doc.ic.ac.uk/resources/affect-recognition-wild-unimulti-modal-analysis-va/) 
