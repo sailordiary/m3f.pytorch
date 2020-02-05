@@ -150,17 +150,6 @@ class AffWild2VA(pl.LightningModule):
         progress_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
         log_dict = {'loss_v': loss_v, 'loss_a': loss_a, 'loss': loss}
 
-        if self.hparams.test_lr:
-            if batch_idx == LR_TEST_STEPS:
-                plot_lr(self.history)
-                print ('Saved LR-loss plot.')
-            elif batch_idx < LR_TEST_STEPS:
-                lr = self.lr_test.get_lr()[0]
-                self.history['lr'].append(lr)
-                if batch_idx != 0: # smoothing
-                    loss = 0.05 * loss + 0.95 * self.history['loss'][-1]
-                self.history['loss'].append(loss)
-
         if 'mtl' in self.hparams.loss:
             # expression branch
             mask_expr = batch['expr_valid']
@@ -190,6 +179,17 @@ class AffWild2VA(pl.LightningModule):
                 loss += loss_au
                 log_dict['loss_au'] = loss_au
                 progress_dict['loss_au'] = loss_au
+        
+        if self.hparams.test_lr:
+            if batch_idx == LR_TEST_STEPS:
+                plot_lr(self.history)
+                print ('Saved LR-loss plot.')
+            elif batch_idx < LR_TEST_STEPS:
+                lr = self.lr_test.get_lr()[0]
+                self.history['lr'].append(lr)
+                if batch_idx != 0: # smoothing
+                    loss = 0.05 * loss + 0.95 * self.history['loss'][-1]
+                self.history['loss'].append(loss.item())
 
         return {
             'loss': loss,
