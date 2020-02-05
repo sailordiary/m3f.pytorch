@@ -97,7 +97,7 @@ class AffWild2VA(pl.LightningModule):
             # audiovisual
             if 'audio' in self.hparams.modality:
                 audio_feats = self.audio(batch['audio'])
-                video_feats = self.visual(x)
+                video_feats = self.visual(x, batch['se_features'], batch['au_features'])
                 if self.hparams.fusion_type == 'concat':
                     features = torch.cat((audio_feats, video_feats), dim=-1)
                     return self.fusion(features)
@@ -107,7 +107,7 @@ class AffWild2VA(pl.LightningModule):
                     return features
             # visual
             else:
-                return self.visual(x)
+                return self.visual(x, batch['se_features'], batch['au_features'])
     
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
