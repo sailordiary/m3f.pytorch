@@ -188,8 +188,9 @@ class AffWild2VA(pl.LightningModule):
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
                 if batch_idx != 0: # smoothing
-                    loss = 0.05 * loss + 0.95 * self.history['loss'][-1]
-                self.history['loss'].append(loss.item())
+                    self.history['loss'].append(0.05 * loss + 0.95 * self.history['loss'][-1])
+                else:
+                    self.history['loss'].append(loss)
 
         return {
             'loss': loss,
