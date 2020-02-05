@@ -242,7 +242,7 @@ class VA_3DVGGM_Split(nn.Module):
                 x_a = self.gru_a(x_a.transpose(1, 2))
                 if self.use_mtl:
                     # Expr, AU, VA
-                    return torch.cat((x_v[:, :7], x_a[:, :8], x_v[:, -1], x_a[:, :-1]), dim=-1)
+                    return torch.cat((x_v[:, :7], x_a[:, :8], x_v[:, -1], x_a[:, -1]), dim=-1)
                 else:
                     return torch.cat((x_v, x_a), dim=-1)
         else:
