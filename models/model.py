@@ -183,7 +183,7 @@ class AffWild2VA(pl.LightningModule):
                 au_hat, au = y_hat[..., 8: 16], batch['class_au']
                 loss_au = 0
                 for i in range(8):
-                    loss_au += self.bce_loss(au_hat[..., i], au[..., i], mask_au)
+                    loss_au += self.bce_loss(au_hat[..., i], au[..., i].float(), mask_au)
                     max_class = torch.argmax(au_hat[..., i], dim=-1).view(-1)
                     acc = torch.sum(au_hat[..., i][mask_au_tile] == au[..., i].view(-1)[mask_au_tile]).item() / valid_au
                     progress_dict['acc_au{}'.format(i+1)] = acc
