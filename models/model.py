@@ -19,7 +19,7 @@ import pytorch_lightning as pl
 
 
 LR_TEST_MAX_LR = 0.01
-LR_TEST_STEPS = 3288
+LR_TEST_STEPS = 1096
 
 
 class AffWild2VA(pl.LightningModule):
