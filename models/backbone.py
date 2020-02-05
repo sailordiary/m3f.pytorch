@@ -225,21 +225,22 @@ class VA_3DVGGM_Split(nn.Module):
             nn.ReLU(True)
         ])
 
-    def forward(self, x):
+    def forward(self, x, se, au):
         x = self.shared(x)
         if self.split_layer != 5:
-            x_v = self.v_private(x)
-            x_a = self.a_private(x)
-            x_v = x_v.squeeze().transpose(1, 2)
-            x_a = x_a.squeeze().transpose(1, 2)
+            x_v = self.v_private(x).squeeze()
+            x_a = self.a_private(x).squeeze()
+            x_v = torch.cat((x_v, se), dim=1) # valence / SENet
+            x_a = torch.cat((x_a, au), dim=1) # arousal / TCAE-AU
             if self.backend == 'gru':
-                x_v = self.gru_v(x_v)
-                x_a = self.gru_a(x_a)
+                x_v = self.gru_v(x_v.transpose(1, 2))
+                x_a = self.gru_a(x_a.transpose(1, 2))
                 return torch.cat((x_v, x_a), dim=-1)
         else:
-            x = x.squeeze().transpose(1, 2)
+            x = x.squeeze()
+            x = torch.cat((x, se, au), dim=1)
             if self.backend == 'gru':
-                x = self.gru(x)
+                x = self.gru(x.transpose(1, 2))
             return x
 
     def _initialize_weights(self):

@@ -7,7 +7,7 @@ from .rnn import GRU
 from .att_fusion import AttFusion
 
 from .utils import concordance_cc2, mse
-from .lr_finder import *
+from .lr_finder import BatchExponentialLR, plot_lr
 
 from argparse import ArgumentParser
 
@@ -144,14 +144,13 @@ class AffWild2VA(pl.LightningModule):
         if self.hparams.test_lr:
             if batch_idx == LR_TEST_STEPS:
                 plot_lr(self.history)
-                print ('Saved lr plot')
+                print ('Saved LR-loss plot.')
             elif batch_idx < LR_TEST_STEPS:
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
-                if batch_idx == 0:
-                    self.history['loss'].append(loss)
-                else:
-                    self.history['loss'].append(0.05 * loss + 0.95 * self.history['loss'][-1])
+                if batch_idx != 0: # smoothing
+                    loss = 0.05 * loss + 0.95 * self.history['loss'][-1]
+                self.history['loss'].append(loss)
 
         if 'mtl' in self.hparams.loss:
             mask = batch['expr_valid']
@@ -384,7 +383,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--windows_per_epoch', default=200, type=int)
 
         parser.add_argument('--learning_rate', default=5e-5, type=float)
-        parser.add_argument('--min_lr', default=1e-6, type=float)
+        parser.add_argument('--min_lr', default=1e-8, type=float)
         parser.add_argument('--decay_factor', default=0.5, type=float)
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)

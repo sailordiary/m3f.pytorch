@@ -217,7 +217,8 @@ class AffWild2SequenceDataset(Dataset):
             se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
             se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose() # 512 * T
             au_path = os.path.join(self.path, 'AU_features', vid_name + '.npy')
-            au_features = np.load(au_path)[start_frame: start_frame + track_len].transpose() # 256 * T
+            # TODO(yuanhang): we drop the 12 AU scores for now
+            au_features = np.load(au_path)[start_frame: start_frame + track_len, :256].transpose() # 256 * T
         if 'audio' in self.modality:
             if self.fps[vid_name] < 15:
                 audio = np.zeros((self.window_len, 200), dtype=np.float32)
