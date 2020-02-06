@@ -22,7 +22,7 @@ def main(hparams):
 
     # init module
     model = VoxCeleb2_1k(hparams)
-    if hparams.checkpoint:
+    if hparams.checkpoint != '':
         model = model.load_from_checkpoint(hparams.checkpoint)
 
     trainer = Trainer(
