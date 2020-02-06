@@ -22,6 +22,8 @@ def main(hparams):
 
     # init module
     model = VoxCeleb2_1k(hparams)
+    if hparams.checkpoint:
+        model = model.load_from_checkpoint(hparams.checkpoint)
 
     trainer = Trainer(
         early_stop_callback=None,
@@ -40,6 +42,8 @@ if __name__ == '__main__':
     parser.add_argument('--gpus', type=str, default='2')
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--seed', type=int, default=12345)
+
+    parser.add_argument('--checkpoint', type=str, default='')
 
     # give the module a chance to add own params
     parser = VoxCeleb2_1k.add_model_specific_args(parser)
