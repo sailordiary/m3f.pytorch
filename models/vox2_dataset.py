@@ -58,7 +58,7 @@ class VoxCeleb2Dataset(Dataset):
         self.files = []
         for l in open(os.path.join(self.path, 'vox2_top1000_dev500utt_{}.csv'.format(self.split)), 'r').read().splitlines():
             identity = self.label_map[l.split('/')[0]]
-            self.files.append((identity, l))
+            self.files.append((l, identity))
         
         print ('Loaded partition {}: {} files'.format(self.split, len(self.files)))
 
