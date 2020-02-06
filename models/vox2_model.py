@@ -168,7 +168,7 @@ class VoxCeleb2_1k(pl.LightningModule):
         # MODEL specific
         parser = ArgumentParser(parents=[parent_parser])
         parser.add_argument('--backbone', default='v2p', type=str)
-        parser.add_argument('--backend', default='none', type=str)
+        parser.add_argument('--backend', default='fc', type=str)
 
         parser.add_argument('--learning_rate', default=5e-5, type=float)
         parser.add_argument('--min_lr', default=1e-8, type=float)
