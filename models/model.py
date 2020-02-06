@@ -17,6 +17,8 @@ from torch.utils.data import DataLoader
 
 import pytorch_lightning as pl
 
+import sys
+
 
 LR_TEST_MAX_LR = 0.01
 LR_TEST_STEPS = 1096 * 3
@@ -181,10 +183,11 @@ class AffWild2VA(pl.LightningModule):
                 progress_dict['loss_au'] = loss_au
         
         if self.hparams.test_lr:
-            if batch_idx == LR_TEST_STEPS:
+            if len(self.history['lr']) == LR_TEST_STEPS:
                 plot_lr(self.history)
                 print ('Saved LR-loss plot.')
-            elif batch_idx < LR_TEST_STEPS:
+                sys.exit(0)
+            else:
                 lr = self.lr_test.get_lr()[0]
                 self.history['lr'].append(lr)
                 if batch_idx != 0: # smoothing
