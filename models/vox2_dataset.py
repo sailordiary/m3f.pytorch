@@ -26,10 +26,11 @@ def load_video(path, start, length,
         crop_size = input_size * 7 // 8
 
     cap = cv2.VideoCapture(path)
+    assert cap.isOpened(), 'read error: {}'.format(path)
     cap.set(1, start)
     for i in range(length):
         ret, img = cap.read()
-        # assert ret, 'read error: {}'.format(path)
+        assert ret, 'read error: {}'.format(path)
         if not ret: img = frames[-1] # TODO(yuanhang): pls make sure this doesn't happen
         if crop_augment:
             img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
@@ -57,7 +58,9 @@ class VoxCeleb2Dataset(Dataset):
         self.label_map = {l: i for i, l in enumerate(open(os.path.join(self.path, 'vox2_top1000_dev500utt_identity.csv'), 'r').read().splitlines())}
         self.files = []
         for l in open(os.path.join(self.path, 'vox2_top1000_dev500utt_{}.csv'.format(self.split)), 'r').read().splitlines():
-            identity = self.label_map[l.split('/')[0]]
+            l = l.split('/')
+            identity = self.label_map[l[0]]
+            path = '{}/{}_{}.mp4'.format(*l) 
             self.files.append((l, identity))
         
         print ('Loaded partition {}: {} files'.format(self.split, len(self.files)))
