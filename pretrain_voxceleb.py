@@ -22,12 +22,11 @@ def main(hparams):
 
     # init module
     model = VoxCeleb2_1k(hparams)
-    if hparams.checkpoint != '':
+    if hparams.checkpoint:
         model = model.load_from_checkpoint(hparams.checkpoint)
 
     trainer = Trainer(
         early_stop_callback=None,
-        val_check_interval=0.5, # mandatory or bug with ReduceLRonPlateau
         gradient_clip_val=1.0,
         default_save_path=hparams.checkpoint_path,
         max_epochs=hparams.max_nb_epochs,

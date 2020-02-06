@@ -159,6 +159,8 @@ class VoxCeleb2_1k(pl.LightningModule):
         if self.hparams.distributed:
             dist_sampler = torch.utils.data.distributed.DistributedSampler(dataset)
             return DataLoader(dataset, batch_size=self.hparams.batch_size, num_workers=self.hparams.workers, pin_memory=True, sampler=dist_sampler)
+        else:
+            return DataLoader(dataset, batch_size=self.hparams.batch_size, shuffle=False, num_workers=self.hparams.workers, pin_memory=True)
 
     @staticmethod
     def add_model_specific_args(parent_parser):
