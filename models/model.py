@@ -87,7 +87,7 @@ class AffWild2VA(pl.LightningModule):
         if self.hparams.modality == 'audiovisual':
             if self.hparams.fusion_type == 'concat':
                 self.fusion = GRU(self.hparams.num_hidden * 2 + self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4),
-                    self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
+                    self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers, dropout=True)
             elif self.hparams.fusion_type == 'attention':
                 self.att_fuse = AttFusion([self.hparams.num_hidden * 2, self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4)], 128)
                 self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)

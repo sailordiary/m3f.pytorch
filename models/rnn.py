@@ -8,7 +8,7 @@ from .convlstm import BiConvLSTM
 
 
 class GRU(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, num_fcs=1):
+    def __init__(self, input_size, hidden_size, num_layers, num_classes, num_fcs=1, dropout=False):
         super(GRU, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -19,19 +19,38 @@ class GRU(nn.Module):
             if num_fcs == 1:
                 self.fc = nn.Linear(hidden_size*2, num_classes)
             elif num_fcs == 2:
-                self.fc = nn.Sequential(
-                    nn.Linear(hidden_size*2, hidden_size),
-                    nn.ReLU(True),
-                    nn.Linear(hidden_size, num_classes)
-                )
+                if dropout:
+                    self.fc = nn.Sequential(
+                        nn.Linear(hidden_size*2, hidden_size),
+                        nn.ReLU(True),
+                        nn.Dropout(0.5),
+                        nn.Linear(hidden_size, num_classes)
+                    )
+                else:
+                    self.fc = nn.Sequential(
+                        nn.Linear(hidden_size*2, hidden_size),
+                        nn.ReLU(True),
+                        nn.Linear(hidden_size, num_classes)
+                    )
             elif num_fcs == 3:
-                self.fc = nn.Sequential(
-                    nn.Linear(hidden_size*2, hidden_size),
-                    nn.ReLU(True),
-                    nn.Linear(hidden_size, hidden_size),
-                    nn.ReLU(True),
-                    nn.Linear(hidden_size, num_classes)
-                )
+                if dropout:
+                    self.fc = nn.Sequential(
+                        nn.Linear(hidden_size*2, hidden_size),
+                        nn.ReLU(True),
+                        nn.Dropout(0.5),
+                        nn.Linear(hidden_size, hidden_size),
+                        nn.ReLU(True),
+                        nn.Dropout(0.5),
+                        nn.Linear(hidden_size, num_classes)
+                    )
+                else:
+                    self.fc = nn.Sequential(
+                        nn.Linear(hidden_size*2, hidden_size),
+                        nn.ReLU(True),
+                        nn.Linear(hidden_size, hidden_size),
+                        nn.ReLU(True),
+                        nn.Linear(hidden_size, num_classes)
+                    )
 
         # init
         stdv = math.sqrt(2 / (input_size + hidden_size))
