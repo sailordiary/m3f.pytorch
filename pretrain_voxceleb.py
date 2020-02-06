@@ -35,7 +35,6 @@ def main(hparams):
         nb_gpu_nodes=hparams.nodes,
         distributed_backend='ddp' if hparams.distributed else 'dp'
     )
-    print (trainer.val_check_batch)
     trainer.fit(model)
 
 
