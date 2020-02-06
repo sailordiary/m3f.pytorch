@@ -27,6 +27,7 @@ def main(hparams):
 
     trainer = Trainer(
         early_stop_callback=None,
+        val_check_interval=0.5, # mandatory or bug with ReduceLRonPlateau
         gradient_clip_val=1.0,
         default_save_path=hparams.checkpoint_path,
         max_nb_epochs=hparams.max_nb_epochs,
