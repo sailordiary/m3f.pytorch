@@ -123,9 +123,9 @@ class VA_3DVGGM(nn.Module):
             ])
         elif self.backend == 'fc':
             self.fc = nn.Sequential(
-                nn.Linear(512, hidden_size),
+                nn.Linear(512, self.hiddenDim),
                 nn.ReLU(True),
-                nn.Linear(hidden_size, num_classes)
+                nn.Linear(self.hiddenDim, self.nClasses)
             )
 
         # initialize
