@@ -30,7 +30,6 @@ class VoxCeleb2_1k(pl.LightningModule):
 
         if self.hparams.backbone == 'resnet':
             self.visual = VA_3DResNet(
-                hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend,
                 resnet_ver='v1',
@@ -38,14 +37,12 @@ class VoxCeleb2_1k(pl.LightningModule):
             )
         elif self.hparams.backbone == 'v2p':
             self.visual = VA_3DVGGM(
-                hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend,
                 nClasses=1000
             )
         elif self.hparams.backbone == 'densenet':
             self.visual = VA_3DDenseNet(
-                hiddenDim=self.hparams.num_hidden,
                 frameLen=self.hparams.window,
                 backend=self.hparams.backend,
                 nClasses=1000
