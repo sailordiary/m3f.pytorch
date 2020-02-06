@@ -130,6 +130,7 @@ class VoxCeleb2_1k(pl.LightningModule):
             optimizer = torch.optim.SGD(self.parameters(),
                                         lr=self.hparams.learning_rate,
                                         momentum=0.9, weight_decay=5e-4)
+            return optimizer
         if self.hparams.test_lr:
             self.lr_test = BatchExponentialLR(optimizer, LR_TEST_MAX_LR, LR_TEST_STEPS)
             return optimizer
