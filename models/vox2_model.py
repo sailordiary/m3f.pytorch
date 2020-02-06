@@ -18,8 +18,8 @@ import pytorch_lightning as pl
 import sys
 
 
-LR_TEST_MAX_LR = 0.01
-LR_TEST_STEPS = 1000
+LR_TEST_MAX_LR = 10
+LR_TEST_STEPS = 400
 
 
 class VoxCeleb2_1k(pl.LightningModule):
