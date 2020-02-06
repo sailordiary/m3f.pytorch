@@ -30,13 +30,13 @@ def load_video(path, start, length,
     cap.set(1, start)
     for i in range(length):
         ret, img = cap.read()
-        assert ret, 'read error: {}'.format(path)
-        if not ret: img = frames[-1] # TODO(yuanhang): pls make sure this doesn't happen
+        if not ret: img = frames[-1] # TODO(yuanhang): this shouldn't happen
         if crop_augment:
             img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
         if mirror_augment and is_training: img = cv2.flip(img, 1)
         # TODO: add temporal augmentation (repeat, deletion)
         frames.append(img)
+    cap.release()
     seq = np.stack(frames).transpose(3, 0, 1, 2).astype(np.float32) # THWC->CTHW
     return seq
 
@@ -60,8 +60,9 @@ class VoxCeleb2Dataset(Dataset):
         for l in open(os.path.join(self.path, 'vox2_top1000_dev500utt_{}.csv'.format(self.split)), 'r').read().splitlines():
             l = l.split('/')
             identity = self.label_map[l[0]]
-            path = '{}/{}_{}.mp4'.format(*l) 
-            self.files.append((l, identity))
+            path = os.path.join(self.path, 'top1000_64f_128', '{}/{}_{}.mp4'.format(*l))
+            if os.path.exists(path):
+                self.files.append((path, identity))
         
         print ('Loaded partition {}: {} files'.format(self.split, len(self.files)))
 
@@ -76,8 +77,7 @@ class VoxCeleb2Dataset(Dataset):
             start_frame = 0
         
         is_training = self.split == 'train'
-        src_vid_fold = os.path.join(self.path, 'top1000_64f_128', vid_name)
-        inputs = load_video(src_vid_fold, start_frame, track_len,
+        inputs = load_video(vid_name, start_frame, track_len,
                             is_training,
                             random.random() > 0.5,
                             True)
