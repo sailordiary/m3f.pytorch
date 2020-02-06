@@ -170,11 +170,11 @@ class VoxCeleb2_1k(pl.LightningModule):
         parser.add_argument('--backbone', default='v2p', type=str)
         parser.add_argument('--backend', default='fc', type=str)
 
-        parser.add_argument('--learning_rate', default=5e-5, type=float)
-        parser.add_argument('--min_lr', default=1e-8, type=float)
+        parser.add_argument('--learning_rate', default=0.3, type=float)
+        parser.add_argument('--min_lr', default=1e-3, type=float)
         parser.add_argument('--decay_factor', default=0.5, type=float)
-        parser.add_argument('--batch_size', default=96, type=int)
-        parser.add_argument('--optimizer', default='adam', type=str)
+        parser.add_argument('--batch_size', default=128, type=int)
+        parser.add_argument('--optimizer', default='sgd', type=str)
         parser.add_argument('--scheduler', default='plateau', type=str)
 
         parser.add_argument('--test_lr', action='store_true', default=False)
@@ -187,6 +187,6 @@ class VoxCeleb2_1k(pl.LightningModule):
         parser.add_argument('--dataset_path', default='/.data/zhangyuanhang/VoxCeleb2', type=str)
         parser.add_argument('--checkpoint_path', default='./vox2', type=str)
         parser.add_argument('--workers', default=8, type=int)
-        parser.add_argument('--max_nb_epochs', default=30, type=int)
+        parser.add_argument('--max_nb_epochs', default=80, type=int)
 
         return parser
