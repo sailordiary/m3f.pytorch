@@ -60,7 +60,7 @@ class VoxCeleb2Dataset(Dataset):
         for l in open(os.path.join(self.path, 'vox2_top1000_dev500utt_{}.csv'.format(self.split)), 'r').read().splitlines():
             l = l.split('/')
             identity = self.label_map[l[0]]
-            path = os.path.join(self.path, 'top1000_64f_128', '{}/{}_{}.mp4'.format(*l))
+            path = os.path.join(self.path, 'top1000_64f_128', '{}/{}/{}_{}.mp4'.format(l[0], self.split, l[1], l[2]))
             if os.path.exists(path):
                 self.files.append((path, identity))
         
