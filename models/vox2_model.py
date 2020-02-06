@@ -180,6 +180,7 @@ class VoxCeleb2_1k(pl.LightningModule):
         parser.add_argument('--test_lr', action='store_true', default=False)
 
         parser.add_argument('--num_fc_layers', default=2, type=int)
+        parser.add_argument('--window', default=16, type=int)
 
         # training specific (for this model)
         parser.add_argument('--distributed', action='store_true', default=False)
