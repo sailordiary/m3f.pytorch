@@ -30,11 +30,12 @@ def main(hparams):
         val_check_interval=0.5, # mandatory or bug with ReduceLRonPlateau
         gradient_clip_val=1.0,
         default_save_path=hparams.checkpoint_path,
-        max_nb_epochs=hparams.max_nb_epochs,
+        max_epochs=hparams.max_nb_epochs,
         gpus=hparams.gpus,
         nb_gpu_nodes=hparams.nodes,
         distributed_backend='ddp' if hparams.distributed else 'dp'
     )
+    print (trainer.val_check_batch)
     trainer.fit(model)
 
 

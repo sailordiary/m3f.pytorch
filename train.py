@@ -32,7 +32,7 @@ def main(hparams):
         check_val_every_n_epoch=1,
         gradient_clip_val=1.0,
         default_save_path=hparams.checkpoint_path,
-        max_nb_epochs=hparams.max_nb_epochs,
+        max_epochs=hparams.max_nb_epochs,
         gpus=hparams.gpus,
         nb_gpu_nodes=hparams.nodes,
         distributed_backend='ddp' if hparams.distributed else 'dp'
