@@ -5,6 +5,7 @@ import random
 
 import numpy as np
 import cv2
+from .cv_augment import adjust_brightness, adjust_contrast
 
 import torch
 from torch.utils.data import Dataset
@@ -24,6 +25,11 @@ def load_video(path, start, length,
         else:
             crop_x, crop_y = input_size // 16, input_size // 16
         crop_size = input_size * 7 // 8
+    
+    # color jitter
+    if is_training:
+        brightness_factor = random.uniform(0.9, 1.1)
+        contrast_factor = random.uniform(0.9, 1.1)
 
     cap = cv2.VideoCapture(path)
     assert cap.isOpened(), 'read error: {}'.format(path)
@@ -34,6 +40,9 @@ def load_video(path, start, length,
         if crop_augment:
             img = img[crop_y: crop_y + crop_size, crop_x: crop_x + crop_size]
         if mirror_augment and is_training: img = cv2.flip(img, 1)
+        if is_training:
+            img = adjust_brightness(img, brightness_factor)
+            img = adjust_contrast(img, contrast_factor)
         # TODO: add temporal augmentation (repeat, deletion)
         frames.append(img)
     cap.release()
