@@ -121,6 +121,12 @@ class VA_3DVGGM(nn.Module):
                 ),
                 nn.Linear(self.hiddenDim, 2)
             ])
+        elif self.backend == 'fc':
+            self.fc = nn.Sequential(
+                nn.Linear(512, hidden_size),
+                nn.ReLU(True),
+                nn.Linear(hidden_size, num_classes)
+            )
 
         # initialize
         self._initialize_weights()
@@ -133,6 +139,9 @@ class VA_3DVGGM(nn.Module):
         elif self.backend.startswith('tcn'):
             x = self.tcn[0](x).transpose(1, 2).contiguous()
             x = self.tcn[1](x)
+        elif self.backend == 'fc':
+            x = torch.mean(x, dim=-1)
+            x = self.fc(x)
         return x
 
     def _initialize_weights(self):
