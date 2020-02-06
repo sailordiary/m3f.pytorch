@@ -140,8 +140,8 @@ class VA_3DVGGM(nn.Module):
             x = self.tcn[0](x).transpose(1, 2).contiguous()
             x = self.tcn[1](x)
         elif self.backend == 'fc':
-            x = torch.mean(x, dim=-1)
-            x = self.fc(x)
+            x = x.transpose(1, 2).contiguous()
+            x = self.fc(x).mean(dim=1)
         return x
 
     def _initialize_weights(self):
