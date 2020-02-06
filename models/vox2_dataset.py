@@ -82,8 +82,8 @@ class VoxCeleb2Dataset(Dataset):
             start_frame = random.randint(0, 64 - self.window_len)
         else:
             vid_name = self.files[i][0]
-            track_len = 24
-            start_frame = 16
+            track_len = 16
+            start_frame = 24
         
         is_training = self.split == 'train'
         inputs = load_video(vid_name, start_frame, track_len,
