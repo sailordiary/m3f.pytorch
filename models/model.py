@@ -31,11 +31,11 @@ class AffWild2VA(pl.LightningModule):
         self.hparams = hparams
 
         use_mtl = 'mtl' in self.hparams.loss
+        # Expr(, AU), VA
         fc_outputs = 7 + 2 if use_mtl else 2 # 7 + 8 + 2 if use_mtl else 2
         if self.hparams.modality == 'audiovisual':
             rnn_fc_classes = -1
         else:
-            # Expr, AU, VA
             rnn_fc_classes = fc_outputs
 
         if 'visual' in self.hparams.modality:
