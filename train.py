@@ -26,6 +26,8 @@ def main(hparams):
         checkpoint = torch.load(hparams.fusion_checkpoint, map_location=lambda storage, loc: storage)
         model.load_state_dict(checkpoint, strict=False)
         print ('Loaded pretrained weights for individual streams')
+    elif hparams.checkpoint:
+        model = model.load_from_checkpoint(hparams.checkpoint)
 
     trainer = Trainer(
         early_stop_callback=None,
@@ -46,7 +48,8 @@ if __name__ == '__main__':
     parser.add_argument('--nodes', type=int, default=1)
     parser.add_argument('--seed', type=int, default=12345)
 
-    parser.add_argument('--fusion_checkpoint', type=str, default='')
+    parser.add_argument('--fusion_checkpoint', type=str, default='') # manual checkpoint
+    parser.add_argument('--checkpoint', type=str, default='') # actual restore
 
     # give the module a chance to add own params
     parser = AffWild2VA.add_model_specific_args(parser)
