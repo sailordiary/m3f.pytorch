@@ -59,8 +59,11 @@ def load_audio(path, length, is_training=False):
     # test at 30 fps
     fps = random.choice(FPS_VALUES) if is_training else 30.0
     y, sr = librosa.load(path, sr=16000)
-    tot_frames = int(len(y) / 16000 * fps)
-    start = random.randint(0, tot_frames - length) if is_training else (tot_frames - length) // 2
+    # audio duration: temporal crop
+    nsamples = int(length / fps * 16000)
+    tot_samples = len(y)
+    start = random.randint(0, tot_samples - nsamples) if is_training else (tot_samples - nsamples) // 2
+    y = y[start: start + nsamples]
     # win_length = 0.025 * 16000
     hop_length = int(1/3 * 1/fps * 16000)
     power = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=512,
@@ -70,7 +73,7 @@ def load_audio(path, length, is_training=False):
     stacked_features = []
     for i in range(length):
         # context_width = 2
-        window_feats = spec[(start + i) * 3: (start + i) * 3 + 5]
+        window_feats = spec[i * 3: i * 3 + 5]
         nframes = len(window_feats)
         if len(window_feats) < 5:
             window_feats = np.pad(window_feats, ((0, 5-nframes), (0, 0)), 'constant')
