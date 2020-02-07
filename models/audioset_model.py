@@ -18,7 +18,7 @@ import sys
 
 
 LR_TEST_MAX_LR = 0.1
-LR_TEST_STEPS = 400
+LR_TEST_STEPS = 900
 
 
 class AudioSet(pl.LightningModule):
@@ -117,7 +117,7 @@ class AudioSet(pl.LightningModule):
             return optimizer
         else:
             if self.hparams.scheduler == 'cyclic':
-                self.cyclic_scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, self.hparams.min_lr, self.hparams.learning_rate, step_size_up=5000, cycle_momentum=self.hparams.optimizer == 'sgd')
+                self.cyclic_scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, self.hparams.min_lr, self.hparams.learning_rate, step_size_up=1200, cycle_momentum=self.hparams.optimizer == 'sgd')
                 return optimizer
             elif self.hparams.scheduler == 'exp':
                 scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, self.hparams.decay_factor)
