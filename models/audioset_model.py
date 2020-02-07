@@ -79,7 +79,7 @@ class AudioSet(pl.LightningModule):
         loss = self.bce_loss(y_hat, y)
 
         max_class = torch.argmax(y_hat, dim=-1)
-        correct = [y[b, max_class] > 0 for b in x.size(0)]
+        correct = [y[b, max_class] > 0 for b in range(x.size(0))]
 
         return {
             'val_loss': loss,
