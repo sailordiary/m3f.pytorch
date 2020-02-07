@@ -104,7 +104,7 @@ class AudioSetDataset(Dataset):
             name, _, _, ontology = l.split(', ')
             wav_path = os.path.join(self.path, fold_map[self.split], name + '.wav')
             if not os.path.exists(wav_path): continue
-            class_labels = ontology[1: -1].split('/')
+            class_labels = ontology[1: -1].split(',')
             # multi-class training
             label = np.zeros(527, dtype=np.float32)
             for mid in class_labels:

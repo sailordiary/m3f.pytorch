@@ -162,7 +162,7 @@ class AudioSet(pl.LightningModule):
 
         parser.add_argument('--num_fc_layers', default=2, type=int)
         parser.add_argument('--num_hidden', default=256, type=int)
-        parser.add_argument('--window', default=16, type=int)
+        parser.add_argument('--window', default=32, type=int)
 
         # training specific (for this model)
         parser.add_argument('--distributed', action='store_true', default=False)
