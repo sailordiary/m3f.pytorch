@@ -403,7 +403,7 @@ class AffWild2VA(pl.LightningModule):
         """
         # MODEL specific
         parser = ArgumentParser(parents=[parent_parser])
-        parser.add_argument('--backbone', default='v2p', type=str)
+        parser.add_argument('--backbone', default='v2p_split', type=str)
         parser.add_argument('--backend', default='gru', type=str)
 
         parser.add_argument('--modality', default='visual', type=str)
@@ -426,8 +426,8 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--loss', default='ccc_mtl', type=str)
         parser.add_argument('--loss_lambda', default=0.5, type=float)
         parser.add_argument('--num_hidden', default=512, type=int)
-        parser.add_argument('--split_layer', default=5, type=int)
-        parser.add_argument('--num_fc_layers', default=1, type=int)
+        parser.add_argument('--split_layer', default=3, type=int)
+        parser.add_argument('--num_fc_layers', default=2, type=int)
         parser.add_argument('--cutout', action='store_true', default=False)
 
         # training specific (for this model)
