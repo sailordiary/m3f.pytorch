@@ -65,6 +65,7 @@ def load_audio(path, length, is_training=False):
     if nsamples > tot_samples:
         # pad a bit more to avoid exception
         y = np.pad(y, (0, nsamples - tot_samples + 5), 'wrap')
+        tot_samples = len(y)
     start = random.randint(0, tot_samples - nsamples) if is_training else (tot_samples - nsamples) // 2
     y = y[start: start + nsamples]
     # win_length = 0.025 * 16000
