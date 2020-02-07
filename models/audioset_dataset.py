@@ -94,7 +94,7 @@ class AudioSetDataset(Dataset):
         self.path = path
         self.window_len = window_len
 
-        fold_map = {'train': 'balanced_train_segments', 'eval': 'eval_segments'}
+        fold_map = {'train': 'balanced_train_segments', 'val': 'eval_segments'}
         annot_path = os.path.join(self.path, '{}.csv'.format(fold_map[self.split]))
         lines = open(os.path.join(self.path, 'class_labels_indices.csv'), 'r').read().splitlines()[1: ]
         mid_map = {l.split(',')[1]: i for i, l in enumerate(lines)}
