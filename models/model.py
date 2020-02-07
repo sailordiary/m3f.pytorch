@@ -31,7 +31,7 @@ class AffWild2VA(pl.LightningModule):
         self.hparams = hparams
 
         use_mtl = 'mtl' in self.hparams.loss
-        fc_outputs = 7 + 8 + 2 if use_mtl else 2
+        fc_outputs = 7 + 2 if use_mtl else 2 # 7 + 8 + 2 if use_mtl else 2
         if self.hparams.modality == 'audiovisual':
             rnn_fc_classes = -1
         else:
@@ -135,7 +135,7 @@ class AffWild2VA(pl.LightningModule):
         
         y_hat = self.forward(batch)
         if 'mtl' in self.hparams.loss:
-            # y = (x_v: Expr(6), V; x_a: AU(8), A)
+            # y = (x_v: Expr(6), V; x_a: [AU(8),] A)
             valence_hat, arousal_hat = y_hat[..., 7], y_hat[..., -1]
         else:
             valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
@@ -167,6 +167,7 @@ class AffWild2VA(pl.LightningModule):
                 acc_expr = torch.sum(max_expr_class[mask_expr_tile] == expr.view(-1)[mask_expr_tile]).item() / valid_expr
                 progress_dict['acc_expr'] = acc_expr
             # AU detection branch
+            '''
             mask_au = batch['au_valid']
             mask_au_tile = mask_au.view(-1)
             valid_au = torch.sum(mask_au_tile.long()).item()
@@ -181,6 +182,7 @@ class AffWild2VA(pl.LightningModule):
                 loss += loss_au
                 log_dict['loss_au'] = loss_au
                 progress_dict['loss_au'] = loss_au
+            '''
         
         if self.hparams.test_lr:
             if len(self.history['lr']) == LR_TEST_STEPS:

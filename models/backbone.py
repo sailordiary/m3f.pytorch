@@ -201,7 +201,8 @@ class VA_3DVGGM_Split(nn.Module):
             else:
                 if self.use_mtl:
                     self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 7 + 1, self.nFCs)
-                    self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 8 + 1, self.nFCs)
+                    # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 8 + 1, self.nFCs)
+                    self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
                 else:
                     self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
                     self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)

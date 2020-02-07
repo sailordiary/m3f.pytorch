@@ -157,11 +157,13 @@ class AffWild2SequenceDataset(Dataset):
                 # T * 1
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
             # load AU labels
+            '''
             for l in open('splits/au.csv', 'r').read().splitlines():
                 vid_name, au_split = l.split(',')
                 lines = open(os.path.join(self.path, 'annotations', 'AU_Set', au_split, vid_name + '.txt'), 'r').read().splitlines()
                 # T * 8
                 self.labels_au[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.int64)
+            '''
         if self.split == 'train':
             self.avail_windows = self.get_available_windows()
         
@@ -235,6 +237,7 @@ class AffWild2SequenceDataset(Dataset):
                 expr_labels = np.zeros(track_len, dtype=np.int64)
             expr_valid = np.array([has_expr] * track_len) & (expr_labels >= 0)
             expr_labels = np.clip(expr_labels, 0, 6) # prune invalid labels: 0 <= class_id <= 6
+            '''
             has_au = vid_name in self.labels_au.keys()
             if has_au:
                 au_labels = self.labels_au[vid_name][start_frame: start_frame + track_len]
@@ -242,6 +245,7 @@ class AffWild2SequenceDataset(Dataset):
                 au_labels = np.zeros((track_len, 8), dtype=np.int64)
             au_valid = np.array([has_au] * track_len) & (np.min(au_labels) >= 0)
             au_labels = np.clip(au_labels, 0, 1)
+            '''
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
@@ -254,7 +258,7 @@ class AffWild2SequenceDataset(Dataset):
             if self.split != 'test':
                 va_labels = np.pad(va_labels, ((0, to_pad), (0, 0)), 'edge')
                 expr_labels = np.pad(expr_labels, ((0, to_pad)), 'edge')
-                au_labels = np.pad(au_labels, ((0, to_pad), (0, 0)), 'edge')
+                # au_labels = np.pad(au_labels, ((0, to_pad), (0, 0)), 'edge')
                 expr_valid = np.pad(expr_valid, ((0, to_pad)), 'edge')
                 au_valid = np.pad(au_valid, ((0, to_pad)), 'edge')
 
@@ -275,8 +279,8 @@ class AffWild2SequenceDataset(Dataset):
             batch['label_valence'] = torch.from_numpy(va_labels[..., 0])
             batch['class_expr'] = expr_labels
             batch['expr_valid'] = expr_valid
-            batch['class_au'] = au_labels
-            batch['au_valid'] = au_valid
+            # batch['class_au'] = au_labels
+            # batch['au_valid'] = au_valid
             batch['label_arousal'] = torch.from_numpy(va_labels[..., 1])
         
         return batch
