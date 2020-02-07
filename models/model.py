@@ -83,7 +83,7 @@ class AffWild2VA(pl.LightningModule):
                     nFCs=self.hparams.num_fc_layers
                 )
         if 'audio' in self.hparams.modality:
-            self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes, self.hparams.num_fc_layers, dropout=True)
+            self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes, self.hparams.num_fc_layers)# , dropout=True)
         if self.hparams.modality == 'audiovisual':
             if self.hparams.fusion_type == 'concat':
                 self.fusion = GRU(self.hparams.num_hidden * 2 + self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4),
