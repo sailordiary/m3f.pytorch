@@ -333,6 +333,8 @@ class AffWild2VA(pl.LightningModule):
                 param.requires_grad = False
             for param in self.fusion.parameters():
                 param.requires_grad = True
+            for param in self.proj_v.parameters():
+                param.requires_grad = True
             if self.hparams.fusion_type == 'attention':
                 for param in self.att_fuse.parameters():
                     param.requires_grad = True
