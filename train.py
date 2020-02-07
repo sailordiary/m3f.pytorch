@@ -24,7 +24,7 @@ def main(hparams):
     model = AffWild2VA(hparams)
     if hparams.fusion_checkpoint:
         checkpoint = torch.load(hparams.fusion_checkpoint, map_location=lambda storage, loc: storage)
-        model.load_state_dict(checkpoint, strict=False)
+        model.load_state_dict(checkpoint['state_dict'], strict=False)
         print ('Loaded pretrained weights for individual streams')
     elif hparams.checkpoint:
         model = model.load_from_checkpoint(hparams.checkpoint)
