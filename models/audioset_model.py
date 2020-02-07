@@ -45,8 +45,8 @@ class AudioSet(pl.LightningModule):
 
         max_class = torch.argmax(y_hat, dim=-1)
         # Top-1 Acc
-        correct = [y[b, max_class] > 0 for b in range(x.size(0))]
-        acc = sum(correct) / x.size(0)
+        correct = torch.gather(y, 1, max_class.view(-1, 1)).view(-1)
+        acc = torch.sum(correct).item() / x.size(0)
         
         if self.hparams.test_lr:
             if len(self.history['lr']) == LR_TEST_STEPS:
@@ -79,7 +79,7 @@ class AudioSet(pl.LightningModule):
         loss = self.bce_loss(y_hat, y)
 
         max_class = torch.argmax(y_hat, dim=-1)
-        correct = [y[b, max_class] > 0 for b in range(x.size(0))]
+        correct = torch.gather(y, 1, max_class.view(-1, 1)).view(-1)
 
         return {
             'val_loss': loss,
@@ -88,8 +88,8 @@ class AudioSet(pl.LightningModule):
 
     def validation_end(self, outputs):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        all_corrects = sum([x['correct'] for x in outputs], [])
-        val_acc = sum(all_corrects) / len(all_corrects)
+        all_corrects = torch.cat([x['correct'] for x in outputs])
+        val_acc = torch.sum(all_corrects).item() / len(all_corrects)
 
         return {
             'val_loss': avg_loss,
