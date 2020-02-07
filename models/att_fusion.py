@@ -6,7 +6,7 @@ from .rnn import GRU
 
 
 class AttFusion(nn.Module):
-    def __init__(self, input_dim=[1024, 1024], hidden_dim=128):
+    def __init__(self, input_dim=[512, 512], hidden_dim=128):
         super(AttFusion, self).__init__()
         self.use_proj = input_dim[1] != input_dim[0]
         if self.use_proj:

@@ -197,15 +197,18 @@ class VA_3DVGGM_Split(nn.Module):
         # backend
         if self.backend == 'gru':
             if split_layer == 5:
-                self.gru = GRU(self.inputDim + 512 + 256, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
+                # self.gru = GRU(self.inputDim + 512 + 256, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
+                self.gru = GRU(self.inputDim + 512 + 512, self.hiddenDim, self.nLayers, self.nClasses, self.nFCs)
             else:
                 if self.use_mtl:
                     self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 7 + 1, self.nFCs)
-                    # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 8 + 1, self.nFCs)
-                    self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                    # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 8 + 1, self.nFCs) # with AU loss
+                    # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs) # with TCAE features
+                    self.gru_a = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs) # with SE features
                 else:
                     self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
-                    self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                    # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                    self.gru_a = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
 
         # initialize
         self._initialize_weights()
@@ -246,7 +249,7 @@ class VA_3DVGGM_Split(nn.Module):
             x_v = self.v_private(x).squeeze()
             x_a = self.a_private(x).squeeze()
             x_v = torch.cat((x_v, se), dim=1) # valence / SENet
-            x_a = torch.cat((x_a, au), dim=1) # arousal / TCAE-AU
+            x_a = torch.cat((x_a, au), dim=1) # arousal / TCAE-AU or SENet
             if self.backend == 'gru':
                 x_v = self.gru_v(x_v.transpose(1, 2))
                 x_a = self.gru_a(x_a.transpose(1, 2))

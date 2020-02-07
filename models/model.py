@@ -83,14 +83,13 @@ class AffWild2VA(pl.LightningModule):
                     nFCs=self.hparams.num_fc_layers
                 )
         if 'audio' in self.hparams.modality:
-            self.audio = GRU(200, self.hparams.num_hidden, 2, rnn_fc_classes, self.hparams.num_fc_layers)# , dropout=True)
+            self.audio = GRU(200, 256, 2, rnn_fc_classes, self.hparams.num_fc_layers)# , dropout=True)
         if self.hparams.modality == 'audiovisual':
-            if self.hparams.fusion_type == 'concat':
-                self.fusion = GRU(self.hparams.num_hidden * 2 + self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4),
-                    self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
-            elif self.hparams.fusion_type == 'attention':
-                self.att_fuse = AttFusion([self.hparams.num_hidden * 2, self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4)], 128)
-                self.fusion = GRU(self.hparams.num_hidden * 2, self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
+            self.proj_v = nn.Linear(self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4), 512)
+            self.fusion = GRU(512 * 2,
+                self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
+            if self.hparams.fusion_type == 'attention':
+                self.att_fuse = AttFusion([512, 512], 128)
 
         self.history = {'lr': [], 'loss': []}
 
@@ -103,7 +102,9 @@ class AffWild2VA(pl.LightningModule):
             # audiovisual
             if 'audio' in self.hparams.modality:
                 audio_feats = self.audio(batch['audio'])
-                video_feats = self.visual(x, batch['se_features'], batch['au_features'])
+                # video_feats = self.visual(x, batch['se_features'], batch['au_features'])
+                video_feats = self.visual(x, batch['se_features'], batch['se_features'])
+                video_feats = self.proj_v(video_feats)
                 if self.hparams.fusion_type == 'concat':
                     features = torch.cat((audio_feats, video_feats), dim=-1)
                     return self.fusion(features)
@@ -113,7 +114,8 @@ class AffWild2VA(pl.LightningModule):
                     return features
             # visual
             else:
-                return self.visual(x, batch['se_features'], batch['au_features'])
+                # return self.visual(x, batch['se_features'], batch['au_features'])
+                return self.visual(x, batch['se_features'], batch['se_features'])
     
     def ccc_loss(self, y_hat, y):
         return 1 - concordance_cc2(y_hat.view(-1), y.view(-1), 'none').squeeze()
@@ -160,7 +162,7 @@ class AffWild2VA(pl.LightningModule):
             if valid_expr > 0:
                 expr_hat, expr = y_hat[..., :7], batch['class_expr']
                 loss_expr = self.ce_loss(expr_hat, expr, mask_expr)
-                loss += loss_expr
+                loss += 0.5 * loss_expr
                 log_dict['loss_expr'] = loss_expr
                 progress_dict['loss_expr'] = loss_expr
                 max_expr_class = torch.argmax(expr_hat, dim=-1).view(-1)
