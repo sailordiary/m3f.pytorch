@@ -32,9 +32,8 @@ class AudioSet(pl.LightningModule):
         self.history = {'lr': [], 'loss': []}
 
     def forward(self, x):
-        logits = self.audio(x)
         # temporal max-pooling
-        return torch.max(dim=1)[0]
+        return torch.max(self.audio(x), dim=1)[0]
     
     def bce_loss(self, y_hat, y):
         return F.binary_cross_entropy_with_logits(y_hat, y)
