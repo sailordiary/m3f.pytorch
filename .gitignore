@@ -6,6 +6,8 @@
 # Outputs
 ensembled_predictions/
 lr_plot.png
+vox2/
+audioset/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
