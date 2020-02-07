@@ -45,7 +45,7 @@ class AudioSet(pl.LightningModule):
 
         max_class = torch.argmax(y_hat, dim=-1)
         # Top-1 Acc
-        correct = [y[b, max_class] > 0 for b in x.size(0)]
+        correct = [y[b, max_class] > 0 for b in range(x.size(0))]
         acc = sum(correct) / x.size(0)
         
         if self.hparams.test_lr:
