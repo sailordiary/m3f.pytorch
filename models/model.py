@@ -86,10 +86,13 @@ class AffWild2VA(pl.LightningModule):
             self.audio = GRU(200, 256, 2, rnn_fc_classes, self.hparams.num_fc_layers)# , dropout=True)
         if self.hparams.modality == 'audiovisual':
             self.proj_v = nn.Linear(self.hparams.num_hidden * (2 if self.hparams.split_layer == 5 else 4), 512)
-            self.fusion = GRU(512 * 2,
-                self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
             if self.hparams.fusion_type == 'attention':
                 self.att_fuse = AttFusion([512, 512], 128)
+                self.fusion = GRU(512,
+                self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
+            else:
+                self.fusion = GRU(512 * 2,
+                self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
 
         self.history = {'lr': [], 'loss': []}
 
