@@ -62,6 +62,9 @@ def load_audio(path, length, is_training=False):
     # audio duration: temporal crop
     nsamples = int(length / fps * 16000)
     tot_samples = len(y)
+    if nsamples > tot_samples:
+        # pad a bit more to avoid exception
+        y = np.pad(y, (0, nsamples - tot_samples + 5), 'wrap')
     start = random.randint(0, tot_samples - nsamples) if is_training else (tot_samples - nsamples) // 2
     y = y[start: start + nsamples]
     # win_length = 0.025 * 16000
