@@ -326,7 +326,7 @@ class AffWild2VA(pl.LightningModule):
         return {}
 
     def configure_optimizers(self):
-        if self.hparams.train_fusion:
+        if self.hparams.freeze_enc:
             for param in self.parameters():
                 param.requires_grad = False
             for param in self.fusion.parameters():
@@ -406,7 +406,7 @@ class AffWild2VA(pl.LightningModule):
 
         parser.add_argument('--modality', default='visual', type=str)
         parser.add_argument('--fusion_type', default='concat', type=str)
-        parser.add_argument('--train_fusion', action='store_true', default=False)
+        parser.add_argument('--freeze_enc', action='store_true', default=False)
 
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
