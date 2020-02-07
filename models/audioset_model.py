@@ -27,7 +27,7 @@ class AudioSet(pl.LightningModule):
         super(AudioSet, self).__init__()
         self.hparams = hparams
         
-        self.audio = GRU(200, self.hparams.num_hidden, 2, 527, self.hparams.num_fc_layers)
+        self.audio = GRU(200, self.hparams.num_hidden, 2, 527, self.hparams.num_fc_layers, dropout=True)
 
         self.history = {'lr': [], 'loss': []}
 
