@@ -18,7 +18,7 @@ import sys
 
 
 LR_TEST_MAX_LR = 0.1
-LR_TEST_STEPS = 900
+LR_TEST_STEPS = 600
 
 
 class AudioSet(pl.LightningModule):
