@@ -367,7 +367,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def train_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality)
+            dataset = AffWild2SequenceDataset('train', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample)
         else:
             # TODO: implement framewise
             raise NotImplementedError
@@ -380,7 +380,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def val_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality)
+            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
@@ -392,7 +392,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def test_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality)
+            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
@@ -415,6 +415,7 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--fusion_type', default='concat', type=str)
         parser.add_argument('--freeze_enc', action='store_true', default=False)
 
+        parser.add_argument('--resample', action='store_true', default=False)
         parser.add_argument('--mode', default='video', type=str)
         parser.add_argument('--window', default=32, type=int)
         parser.add_argument('--windows_per_epoch', default=200, type=int)
