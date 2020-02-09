@@ -165,7 +165,7 @@ class AffWild2VA(pl.LightningModule):
             if valid_expr > 0:
                 expr_hat, expr = y_hat[..., :7], batch['class_expr']
                 loss_expr = self.ce_loss(expr_hat, expr, mask_expr)
-                loss += 0.5 * loss_expr
+                loss += 0.8 * loss_expr # balancing factor
                 log_dict['loss_expr'] = loss_expr
                 progress_dict['loss_expr'] = loss_expr
                 max_expr_class = torch.argmax(expr_hat, dim=-1).view(-1)
