@@ -108,7 +108,7 @@ class AffWild2SequenceDataset(Dataset):
     release: 'ibug' -- 112*112 ArcFace crops; 'vipl' -- (256*256->)128*128->112*112 VIPL crops
     input_size: actual size of raw input images
     '''
-    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112, modality='visual'):
+    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112, modality='visual', noise_and_balance=False):
         self.split = split
         self.path = path
         self.window_len = window_len
@@ -165,13 +165,16 @@ class AffWild2SequenceDataset(Dataset):
                 self.labels_au[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.int64)
             '''
         if self.split == 'train':
-            self.avail_windows = self.get_available_windows()
+            if noise_and_balance:
+                self.avail_windows = self.get_noisy_balanced_windows()
+            else:
+                self.avail_windows = self.get_available_windows()
         
         print ('Loaded partition {}: {} files, {} windows'.format(self.split, len(self.files), len(self.sample_src)))
     
-    def get_available_windows(self):
+    def get_noisy_balanced_windows(self):
         windows = {k: [] for k in self.files}
-        cache_path = '{}_{}_window{}_{}.pkl'.format(self.release, self.split, self.window_len, self.modality)
+        cache_path = '{}_{}_noisybalancedwindow{}_{}.pkl'.format(self.release, self.split, self.window_len, self.modality)
         if os.path.exists(cache_path):
             return pickle.load(open(cache_path, 'rb'))
         if self.modality == 'audio':
@@ -181,16 +184,54 @@ class AffWild2SequenceDataset(Dataset):
                 avail_ranges = one_runs(has_label)
                 for w_st, w_ed in avail_ranges:
                     windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
+                # try to balance the dataset by considering valence
+                scores = [(window, self.labels_va[w_st: w_st + self.window_len, 0].mean()) for window, (w_st, _) in zip(windows[vid_name], avail_ranges)]
+                scores.sort(key=lambda x: x[1])
+                zero_crossing = np.searchsorted([x[1] for x in scores], 0)
+                # duplicate all windows with negative mean valence
+                windows[vid_name].extend([x[0] for x in scores[: zero_crossing]])
         else:
             # visual and audiovisual
             for vid_name in tqdm(self.files, desc='Scanning available windows'):
                 src_fold = os.path.join(self.base, vid_name)
                 has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels_va[vid_name]))])
                 has_label = np.max(np.abs(self.labels_va[vid_name]), axis=1) <= 1
+                # force noisy unlabelled frames to zero
+                self.labels_va[vid_name][~has_label] = 0
+                # TODO(yuanhang): this sliding process is probably slow but should work
+                for w_st in range(0, self.nb_frames[vid_name] - self.window_len + 1):
+                    # allow up to 25% missing frames or missing labels
+                    missing_percentage = max(1 - np.sum(has_image[w_st: w_st + self.window_len]) / self.window_len, 1 - np.sum(has_label[w_st: w_st + self.window_len]) / self.window_len)
+                    if missing_percentage > 0.25: continue
+                    windows[vid_name].append(w_st)
+                    # duplicate windows with negative mean valence by double appending
+                    if self.labels_va[w_st: w_st + self.window_len, 0].mean() < 0:
+                        windows[vid_name].append(w_st)
+                # we're up all night to get lucky :(
+                assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
+        pickle.dump(windows, open(cache_path, 'wb'))
+        return windows
+    
+    def get_available_windows(self):
+        windows = {k: [] for k in self.files}
+        cache_path = '{}_{}_window{}_{}.pkl'.format(self.release, self.split, self.window_len, self.modality)
+        if os.path.exists(cache_path):
+            return pickle.load(open(cache_path, 'rb'))
+        if self.modality == 'audio':
+            for vid_name in tqdm(self.files, desc='Scanning available windows'):
+                has_label = np.max(np.abs(self.labels_va[vid_name]), axis=1) <= 1
+                avail_ranges = one_runs(has_label)
+                for w_st, w_ed in avail_ranges:
+                    windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
+        else:
+            for vid_name in tqdm(self.files, desc='Scanning available windows'):
+                src_fold = os.path.join(self.base, vid_name)
+                # check that both image and annotation is available
+                has_image = np.array([os.path.exists(os.path.join(src_fold, '{:05d}.jpg'.format(i + 1))) for i in range(len(self.labels_va[vid_name]))])
+                has_label = np.max(np.abs(self.labels_va[vid_name]), axis=1) <= 1
                 avail_ranges = one_runs(has_image & has_label)
                 for w_st, w_ed in avail_ranges:
                     windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
-                # we're up all night to get lucky :(
                 assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
         pickle.dump(windows, open(cache_path, 'wb'))
         return windows
