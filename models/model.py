@@ -263,10 +263,29 @@ class AffWild2VA(pl.LightningModule):
         for k, w in predictions.items():
             # sort segment predictions by start frame index
             sorted_preds = sorted(w)
-            gt_v[k] = torch.cat([x[1] for x in sorted_preds])
-            gt_a[k] = torch.cat([x[2] for x in sorted_preds])
-            pred_v[k] = torch.cat([x[3] for x in sorted_preds])
-            pred_a[k] = torch.cat([x[4] for x in sorted_preds])
+            if not self.hparams.test_on_val:
+                gt_v[k] = torch.cat([x[1] for x in sorted_preds])
+                gt_a[k] = torch.cat([x[2] for x in sorted_preds])
+                pred_v[k] = torch.cat([x[3] for x in sorted_preds])
+                pred_a[k] = torch.cat([x[4] for x in sorted_preds])
+            else:
+                nframes = sorted_preds[-1][0] + len(sorted_preds[-1][1])
+                pred_v[k] = torch.zeros(nframes)
+                pred_a[k] = torch.zeros(nframes)
+                # TODO(yuanhang): fetch gt directly from dataset?
+                gt_v[k] = torch.zeros(nframes)
+                gt_a[k] = torch.zeros(nframes)
+                for x in sorted_preds:
+                    seg_nframes = len(x[1])
+                    gt_v[k][x[0]: x[0] + seg_nframes] += x[1]
+                    gt_a[k][x[0]: x[0] + seg_nframes] += x[2]
+                    pred_v[k][x[0]: x[0] + seg_nframes] += x[3]
+                    pred_a[k][x[0]: x[0] + seg_nframes] += x[4]
+                # accounting for the overlaps
+                gt_v[k][self.haprams.window // 2: ] /= 2.
+                gt_a[k][self.haprams.window // 2: ] /= 2.
+                pred_v[k][self.haprams.window // 2: ] /= 2.
+                pred_a[k][self.haprams.window // 2: ] /= 2.
         torch.save({
             'valence_gt': gt_v,
             'arousal_gt': gt_a,
@@ -324,8 +343,19 @@ class AffWild2VA(pl.LightningModule):
         for k, w in predictions.items():
             # sort segment predictions by start frame index
             sorted_preds = sorted(w)
-            pred_v[k] = torch.cat([x[1] for x in sorted_preds])
-            pred_a[k] = torch.cat([x[2] for x in sorted_preds])
+            # DEPRECATED: stride = wlen
+            # pred_v[k] = torch.cat([x[1] for x in sorted_preds])
+            # pred_a[k] = torch.cat([x[2] for x in sorted_preds])
+            # stride = wlen / 2
+            nframes = sorted_preds[-1][0] + len(sorted_preds[-1][1])
+            pred_v[k] = torch.zeros(nframes)
+            pred_a[k] = torch.zeros(nframes)
+            for x in sorted_preds:
+                seg_nframes = len(x[1])
+                pred_v[k][x[0]: x[0] + seg_nframes] += x[3]
+                pred_a[k][x[0]: x[0] + seg_nframes] += x[4]
+            pred_v[k][self.haprams.window // 2: ] /= 2.
+            pred_a[k][self.haprams.window // 2: ] /= 2.
         # save predictions for further ensembling
         torch.save({
             'valence_pred': pred_v,
@@ -384,7 +414,7 @@ class AffWild2VA(pl.LightningModule):
     @pl.data_loader
     def val_dataloader(self):
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample)
+            dataset = AffWild2SequenceDataset('val', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample, 2 if self.hparams.test_on_val else 1)
         else:
             raise NotImplementedError
         if self.hparams.distributed:
@@ -398,7 +428,7 @@ class AffWild2VA(pl.LightningModule):
         if self.hparams.test_on_val:
             return self.val_dataloader()
         if self.hparams.mode == 'video':
-            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample)
+            dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample, 2) # stride = 1/2 window_len
         else:
             raise NotImplementedError
         if self.hparams.distributed:

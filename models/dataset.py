@@ -16,7 +16,7 @@ from torch.utils.data import Dataset
 def sequence_cutout(seq, n_holes=1, fill_value=127.5):
     h = seq.shape[-2]
     w = seq.shape[-1]
-    length = h // 4
+    length = h // 2
 
     for n in range(n_holes):
         y = np.random.randint(h)
@@ -108,7 +108,7 @@ class AffWild2SequenceDataset(Dataset):
     release: 'ibug' -- 112*112 ArcFace crops; 'vipl' -- (256*256->)128*128->112*112 VIPL crops
     input_size: actual size of raw input images
     '''
-    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112, modality='visual', noise_and_balance=False):
+    def __init__(self, split, path, window_len=16, windows_per_epoch=20, apply_cutout=True, release='ibug', input_size=112, modality='visual', noise_and_balance=False, inv_test_stride=1):
         self.split = split
         self.path = path
         self.window_len = window_len
@@ -141,8 +141,9 @@ class AffWild2SequenceDataset(Dataset):
             self.sample_src = []
             for i, vid_name in enumerate(self.files):
                 # pairs of (video_idx, window_start)
-                for j in range(self.nb_frames[vid_name] // self.window_len):
-                    self.sample_src.append((i, j * self.window_len))
+                # test: stride = wlen / 2; training-val: wlen
+                for j in range(0, self.nb_frames[vid_name], self.window_len // inv_test_stride):
+                    self.sample_src.append((i, j))
         if self.split != 'test':
             self.labels_va, self.labels_expr, self.labels_au = {}, {}, {}
             fold_map = {'train': 'Training_Set', 'val': 'Validation_Set'}
