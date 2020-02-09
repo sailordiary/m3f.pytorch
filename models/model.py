@@ -290,6 +290,8 @@ class AffWild2VA(pl.LightningModule):
         }
     
     def test_step(self, batch, batch_idx):
+        if self.hparams.test_on_val:
+            return self.validation_step(batch, batch_idx)
         v_hat, a_hat = [], []
         
         x = batch['video']
@@ -308,6 +310,8 @@ class AffWild2VA(pl.LightningModule):
         }
 
     def test_end(self, outputs):
+        if self.hparams.test_on_val:
+            return self.validation_end(outputs)
         predictions = {}
         for x in outputs:
             # gather batch elements by file name
@@ -391,6 +395,8 @@ class AffWild2VA(pl.LightningModule):
 
     @pl.data_loader
     def test_dataloader(self):
+        if self.hparams.test_on_val:
+            return self.val_dataloader()
         if self.hparams.mode == 'video':
             dataset = AffWild2SequenceDataset('test', self.hparams.dataset_path, self.hparams.window, self.hparams.windows_per_epoch, self.hparams.cutout, self.hparams.release, self.hparams.input_size, self.hparams.modality, self.hparams.resample)
         else:
@@ -426,8 +432,9 @@ class AffWild2VA(pl.LightningModule):
         parser.add_argument('--batch_size', default=96, type=int)
         parser.add_argument('--optimizer', default='adam', type=str)
         parser.add_argument('--scheduler', default='plateau', type=str)
-
         parser.add_argument('--test_lr', action='store_true', default=False)
+
+        parser.add_argument('--test_on_val', action='store_true', default=False)
 
         parser.add_argument('--loss', default='ccc_mtl', type=str)
         parser.add_argument('--loss_lambda', default=0.5, type=float)
