@@ -312,7 +312,7 @@ class AffWild2SequenceDataset(Dataset):
                 expr_labels = np.pad(expr_labels, ((0, to_pad)), 'edge')
                 # au_labels = np.pad(au_labels, ((0, to_pad), (0, 0)), 'edge')
                 expr_valid = np.pad(expr_valid, ((0, to_pad)), 'edge')
-                au_valid = np.pad(au_valid, ((0, to_pad)), 'edge')
+                # au_valid = np.pad(au_valid, ((0, to_pad)), 'edge')
 
         batch = {
             'vid_name': vid_name,
