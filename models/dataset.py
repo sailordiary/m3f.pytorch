@@ -150,7 +150,7 @@ class AffWild2SequenceDataset(Dataset):
                 lines = open(os.path.join(self.path, 'annotations', 'VA_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
                 # T * 2
                 self.labels_va[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
-                assert len(self.labels_va[vid_name]) == self.nb_frames[vid_name], 'what happened to {}? {} != {}'.format(vid_name, len(self.labels_va[vid_name]), self.nb_frames[vid_name])
+                # assert len(self.labels_va[vid_name]) == self.nb_frames[vid_name], 'what happened to {}? {} != {}'.format(vid_name, len(self.labels_va[vid_name]), self.nb_frames[vid_name])
             # load expression labels
             for l in open('splits/expr.csv', 'r').read().splitlines():
                 vid_name, expr_split = l.split(',')
@@ -158,7 +158,7 @@ class AffWild2SequenceDataset(Dataset):
                 lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', expr_split, vid_name + '.txt'), 'r').read().splitlines()
                 # T * 1
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
-                assert len(self.labels_expr[vid_name]) == len(self.labels_va[vid_name]), 'what happened to {}?'.format(vid_name)
+                # assert len(self.labels_expr[vid_name]) == len(self.labels_va[vid_name]), 'what happened to {}?'.format(vid_name)
             # load AU labels
             '''
             for l in open('splits/au.csv', 'r').read().splitlines():
@@ -202,7 +202,7 @@ class AffWild2SequenceDataset(Dataset):
                 # force noisy unlabelled frames to zero
                 self.labels_va[vid_name][~has_label] = 0
                 # TODO(yuanhang): this sliding process is probably slow but should work
-                for w_st in range(0, self.nb_frames[vid_name] - self.window_len + 1):
+                for w_st in range(0, len(self.labels_va[vid_name]) - self.window_len + 1):
                     # allow up to 25% missing frames or missing labels
                     missing_percentage = max(1 - np.sum(has_image[w_st: w_st + self.window_len]) / self.window_len, 1 - np.sum(has_label[w_st: w_st + self.window_len]) / self.window_len)
                     if missing_percentage > 0.25: continue
