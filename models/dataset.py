@@ -153,6 +153,7 @@ class AffWild2SequenceDataset(Dataset):
             # load expression labels
             for l in open('splits/expr.csv', 'r').read().splitlines():
                 vid_name, expr_split = l.split(',')
+                if not vid_name in self.files: continue
                 lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', expr_split, vid_name + '.txt'), 'r').read().splitlines()
                 # T * 1
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
