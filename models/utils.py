@@ -2,6 +2,7 @@ import numpy as np
 from scipy.signal import medfilt, wiener
 from matplotlib import pyplot as plt
 
+'''
 import pyaudio
 import wave
 
@@ -58,6 +59,7 @@ class AudioPlayer:
         self.stream.close()
         self.wf.close()
         self.p.terminate()
+'''
 
 
 def concordance_cc2(r1, r2, reduction='mean'):
