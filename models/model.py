@@ -282,10 +282,10 @@ class AffWild2VA(pl.LightningModule):
                     pred_v[k][x[0]: x[0] + seg_nframes] += x[3]
                     pred_a[k][x[0]: x[0] + seg_nframes] += x[4]
                 # accounting for the overlaps
-                gt_v[k][self.haprams.window // 2: ] /= 2.
-                gt_a[k][self.haprams.window // 2: ] /= 2.
-                pred_v[k][self.haprams.window // 2: ] /= 2.
-                pred_a[k][self.haprams.window // 2: ] /= 2.
+                gt_v[k][self.hparams.window // 2: ] /= 2.
+                gt_a[k][self.hparams.window // 2: ] /= 2.
+                pred_v[k][self.hparams.window // 2: ] /= 2.
+                pred_a[k][self.hparams.window // 2: ] /= 2.
         torch.save({
             'valence_gt': gt_v,
             'arousal_gt': gt_a,
@@ -354,8 +354,8 @@ class AffWild2VA(pl.LightningModule):
                 seg_nframes = len(x[1])
                 pred_v[k][x[0]: x[0] + seg_nframes] += x[3]
                 pred_a[k][x[0]: x[0] + seg_nframes] += x[4]
-            pred_v[k][self.haprams.window // 2: ] /= 2.
-            pred_a[k][self.haprams.window // 2: ] /= 2.
+            pred_v[k][self.hparams.window // 2: ] /= 2.
+            pred_a[k][self.hparams.window // 2: ] /= 2.
         # save predictions for further ensembling
         torch.save({
             'valence_pred': pred_v,
