@@ -1,3 +1,4 @@
+import torch
 import logging
 from pytorch_lightning import Trainer
 from argparse import ArgumentParser
@@ -8,7 +9,11 @@ logging.basicConfig(level=logging.INFO)
 
 def main(hparams):
     # init module
-    model = AffWild2VA(hparams).load_from_checkpoint(hparams.checkpoint)
+    model = AffWild2VA(hparams)
+    # make it easier for us to add new params
+    checkpoint = torch.load(hparams.checkpoint, map_location=lambda storage, loc: storage)
+    model.load_state_dict(checkpoint['state_dict'])
+    print ('Loaded pretrained weights')
 
     trainer = Trainer(
         gpus=hparams.gpus,
