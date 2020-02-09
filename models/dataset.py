@@ -150,6 +150,7 @@ class AffWild2SequenceDataset(Dataset):
                 lines = open(os.path.join(self.path, 'annotations', 'VA_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
                 # T * 2
                 self.labels_va[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
+                assert len(self.labels_va[vid_name]) == self.nb_frames[vid_name], 'what happened to {}? {} != {}'.format(vid_name, len(self.labels_va[vid_name]), self.nb_frames[vid_name])
             # load expression labels
             for l in open('splits/expr.csv', 'r').read().splitlines():
                 vid_name, expr_split = l.split(',')
