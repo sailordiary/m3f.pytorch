@@ -156,6 +156,7 @@ class AffWild2SequenceDataset(Dataset):
                 lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', expr_split, vid_name + '.txt'), 'r').read().splitlines()
                 # T * 1
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
+                assert len(self.labels_expr[vid_name]) == len(self.labels_va[vid_name]), 'what happened to {}?'.format(vid_name)
             # load AU labels
             '''
             for l in open('splits/au.csv', 'r').read().splitlines():
