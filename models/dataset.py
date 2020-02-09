@@ -150,7 +150,6 @@ class AffWild2SequenceDataset(Dataset):
                 lines = open(os.path.join(self.path, 'annotations', 'VA_Set', fold_map[self.split], vid_name + '.txt'), 'r').read().splitlines()
                 # T * 2
                 self.labels_va[vid_name] = np.loadtxt(lines, delimiter=',', skiprows=1, dtype=np.float32)
-                # assert len(self.labels_va[vid_name]) == self.nb_frames[vid_name], 'what happened to {}? {} != {}'.format(vid_name, len(self.labels_va[vid_name]), self.nb_frames[vid_name])
             # load expression labels
             for l in open('splits/expr.csv', 'r').read().splitlines():
                 vid_name, expr_split = l.split(',')
@@ -158,7 +157,6 @@ class AffWild2SequenceDataset(Dataset):
                 lines = open(os.path.join(self.path, 'annotations', 'EXPR_Set', expr_split, vid_name + '.txt'), 'r').read().splitlines()
                 # T * 1
                 self.labels_expr[vid_name] = np.loadtxt(lines, skiprows=1, dtype=np.int64)
-                # assert len(self.labels_expr[vid_name]) == len(self.labels_va[vid_name]), 'what happened to {}?'.format(vid_name)
             # load AU labels
             '''
             for l in open('splits/au.csv', 'r').read().splitlines():
@@ -262,9 +260,18 @@ class AffWild2SequenceDataset(Dataset):
                                 self.input_size)
             se_path = os.path.join(self.path, 'se101_feats', vid_name + '.npy')
             se_features = np.load(se_path)[start_frame: start_frame + track_len].transpose() # 512 * T
+            if se_features.shape[-1] < track_len:
+                # NOTE(yuanhang): there's a slight chance that our #frames
+                # mismatches the provided annotations, in which case we must
+                # pad the pre-extracted features first. This can be traced
+                # to combine_features.py which I sent to Rulin for reference,
+                # which unfortunately reads #frames from frames_fps.csv :(
+                se_features = np.pad(se_features, ((0, 0), (0, track_len - se_features.shape[-1])), 'edge')
             au_path = os.path.join(self.path, 'AU_feats', vid_name + '.npy')
             # TODO(yuanhang): we drop the 12 AU scores for now
             au_features = np.load(au_path)[start_frame: start_frame + track_len, :256].transpose() # 256 * T
+            if au_features.shape[-1] < track_len:
+                au_features = np.pad(au_features, ((0, 0), (0, track_len - au_features.shape[-1])), 'edge')
         if 'audio' in self.modality:
             if self.fps[vid_name] < 15:
                 audio = np.zeros((self.window_len, 200), dtype=np.float32)
