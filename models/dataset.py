@@ -185,7 +185,7 @@ class AffWild2SequenceDataset(Dataset):
                 for w_st, w_ed in avail_ranges:
                     windows[vid_name].extend(list(range(w_st, w_ed - self.window_len + 1)))
                 # try to balance the dataset by considering valence
-                scores = [(window, self.labels_va[w_st: w_st + self.window_len, 0].mean()) for window, (w_st, _) in zip(windows[vid_name], avail_ranges)]
+                scores = [(window, self.labels_va[vid_name][w_st: w_st + self.window_len, 0].mean()) for window, (w_st, _) in zip(windows[vid_name], avail_ranges)]
                 scores.sort(key=lambda x: x[1])
                 zero_crossing = np.searchsorted([x[1] for x in scores], 0)
                 # duplicate all windows with negative mean valence
@@ -205,7 +205,7 @@ class AffWild2SequenceDataset(Dataset):
                     if missing_percentage > 0.25: continue
                     windows[vid_name].append(w_st)
                     # duplicate windows with negative mean valence by double appending
-                    if self.labels_va[w_st: w_st + self.window_len, 0].mean() < 0:
+                    if self.labels_va[vid_name][w_st: w_st + self.window_len, 0].mean() < 0:
                         windows[vid_name].append(w_st)
                 # we're up all night to get lucky :(
                 assert len(windows[vid_name]) > 0, 'no available windows for {}'.format(vid_name)
