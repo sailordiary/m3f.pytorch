@@ -360,8 +360,8 @@ class AffWild2VA(pl.LightningModule):
             pred_a[k] = torch.zeros(nframes)
             for x in sorted_preds:
                 seg_nframes = len(x[1])
-                pred_v[k][x[0]: x[0] + seg_nframes] += x[3]
-                pred_a[k][x[0]: x[0] + seg_nframes] += x[4]
+                pred_v[k][x[0]: x[0] + seg_nframes] += x[1]
+                pred_a[k][x[0]: x[0] + seg_nframes] += x[2]
             pred_v[k][self.hparams.window // 2: ] /= 2.
             pred_a[k][self.hparams.window // 2: ] /= 2.
         # save predictions for further ensembling
