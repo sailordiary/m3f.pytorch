@@ -26,7 +26,7 @@ def mse(preds, labels):
     return sum((preds - labels) ** 2) / len(labels)
 
 
-def smooth_predictions(preds, window=7, mode='wiener'):
+def smooth_predictions(preds, window=13, mode='wiener'):
     if mode == 'median':
         return np.apply_along_axis(lambda x: medfilt(x, window), 0, preds)
     elif mode == 'wiener':

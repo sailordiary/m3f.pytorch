@@ -30,7 +30,7 @@ def run_ensemble(eval_list, score_list):
     for video_name in tqdm(video_names):
         with open(os.path.join('VA-Track', video_name + '.txt'), 'w') as fp:
             valence = video_scores[video_name]['valence'].numpy() / nb_scores
-            arousal = video_scores[video_name]['valence'].numpy() / nb_scores
+            arousal = video_scores[video_name]['arousal'].numpy() / nb_scores
             valence = smooth_predictions(valence)
             arousal = smooth_predictions(arousal)
             fp.write('valence,arousal\n')
