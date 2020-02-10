@@ -94,7 +94,7 @@ class AffWild2VA(pl.LightningModule):
                 self.fusion = GRU(512 * 2,
                 self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
             elif self.hparams.fusion_type == 'att_dec':
-                self.att_dec = AttEncDec()
+                self.fusion = AttEncDec()
 
         self.history = {'lr': [], 'loss': []}
 
@@ -120,9 +120,9 @@ class AffWild2VA(pl.LightningModule):
                     features = torch.cat((audio_feats, video_feats), dim=-1)
                     if 'arousal' in batch.keys():
                         trg = torch.stack((batch['valence'], batch['arousal']), dim=-1)
-                        predictions = self.att_dec(features, trg)
+                        predictions = self.fusion(features, trg)
                     else:
-                        predictions = self.att_dec(features)
+                        predictions = self.fusion(features)
                     return predictions
             # visual
             else:
