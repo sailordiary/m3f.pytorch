@@ -1,5 +1,4 @@
 pytorch-lightning
 opencv-python
 librosa
-pyaudio
 tqdm

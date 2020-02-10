@@ -4,8 +4,6 @@ import torch.nn as nn
 from torch.nn import init
 from torch.nn.utils.rnn import pad_packed_sequence, pack_padded_sequence
 
-from .convlstm import BiConvLSTM
-
 
 class GRU(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, num_classes, num_fcs=1, dropout=False):
@@ -73,22 +71,5 @@ class GRU(nn.Module):
         out, _ = self.gru(x)
         if self.num_classes > 0:
             out = self.fc(out)  # predictions based on every time step
-
-        return out
-
-
-class CLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, fwd_att=False):
-        super(CLSTM, self).__init__()
-        self.hidden_size = hidden_size
-        self.num_layers = num_layers
-        self.convlstm = BiConvLSTM(input_size=(3, 3), input_dim=input_size, hidden_dim=[hidden_size] * num_layers, kernel_size=(3, 3), num_layers=num_layers, bias=True, return_all_layers=False, fwd_att=fwd_att)
-        self.fc = nn.Linear(hidden_size * 3 * 3, num_classes) # nn.Linear(hidden_size*2, num_classes)
-
-
-    def forward(self, x):
-        out = self.convlstm(x)
-        out = out.view(out.size(0), out.size(1), -1)
-        out = self.fc(out)  # predictions based on every time step
 
         return out

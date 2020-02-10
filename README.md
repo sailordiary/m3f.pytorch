@@ -13,16 +13,21 @@
 Valence-arousal estimation models trained on Aff-Wild2.
 
 ## How to run   
-First, install dependencies   
+First, install dependencies
 ```bash
 # clone project   
 git clone https://github.com/sailordiary/affwild2-va-models
+python3 -m pip install -r requirements.txt --user
 ```
 
-You can download our cropped-aligned face tracks here: [[256x256 px]](https://mailsucaseducn-my.sharepoint.com/:f:/g/personal/zhangyuanhang15_mails_ucas_edu_cn/ErGo36iyXzFFtHcyXIQIuZABnaLsMiHE1CZ5EhsQ7HzhMw?e=9xBNXT)
+## Dataset
+We use the [Aff-Wild2 dataset](https://ibug.doc.ic.ac.uk/resources/aff-wild2/). The raw videos are decoded with ``ffmpeg", and passed to [RetinaFace-ResNet50](https://github.com/deepinsight/insightface/tree/master/RetinaFace) for face detection.
 
-## Results
-Aff-Wild2 Valence-Arousal Estimation Model Zoo:
+You can download our version of cropped-aligned face tracks here:
+
+**OneDrive**: [[256x256 px]](https://mailsucaseducn-my.sharepoint.com/:f:/g/personal/zhangyuanhang15_mails_ucas_edu_cn/ErGo36iyXzFFtHcyXIQIuZABnaLsMiHE1CZ5EhsQ7HzhMw?e=9xBNXT)
+
+(At this moment some files are still being uploaded, we apologize for the inconvenience.)
 
 ### Citation   
 ```
