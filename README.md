@@ -10,7 +10,7 @@
 </div>
  
 ## Description
-This repo holds the PyTorch implementation of the approach described in our report "M³T: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation", which is used for our entry to ABAW Challenge 2020 (VA track). We provide models trained on Aff-Wild2.
+This repository holds the PyTorch implementation of the approach described in our report "M³T: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation", which is used for our entry to ABAW Challenge 2020 (VA track). We provide models trained on Aff-Wild2.
 
 ## Update
 
@@ -40,7 +40,13 @@ We use the [Aff-Wild2 dataset](https://ibug.doc.ic.ac.uk/resources/aff-wild2/). 
 
 We provide the cropped-aligned face tracks (256x256, ~79G zipped) as well as pre-computed SENet-101 and TCAE features we use for our experiments here: [[OneDrive]](https://mailsucaseducn-my.sharepoint.com/:f:/g/personal/zhangyuanhang15_mails_ucas_edu_cn/ErGo36iyXzFFtHcyXIQIuZABnaLsMiHE1CZ5EhsQ7HzhMw?e=sko5Uy)
 
-Please note that in addition to the 256-dimensional encoder features, we also saved 12 AU activation scores predicted by TCAE, which together are concatenated into a 268-dimensional vector for each video frame. We only used the encoder features for our experiments, but feel free to experiment with this extra information.
+*Some files are still being uploaded at this moment. Please check the page again later.*
+
+Note that in addition to the 256-dimensional encoder features, we also saved 12 AU activation scores predicted by TCAE, which together are concatenated into a 268-dimensional vector for each video frame. We only used the encoder features for our experiments, but feel free to experiment with this extra information.
+
+## Model Zoo
+
+Coming soon...
 
 ## Citation   
 ```

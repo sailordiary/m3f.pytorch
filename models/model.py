@@ -322,8 +322,7 @@ class AffWild2VA(pl.LightningModule):
             return self.validation_step(batch, batch_idx)
         v_hat, a_hat = [], []
         
-        x = batch['video']
-        y_hat = self.forward(x).cpu()
+        y_hat = self.forward(batch).cpu()
         valence_hat, arousal_hat = y_hat[..., -2], y_hat[..., -1]
         lens = batch['length']
 
