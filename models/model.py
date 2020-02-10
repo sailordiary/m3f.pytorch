@@ -3,7 +3,7 @@
 #
 from .dataset import AffWild2SequenceDataset
 from .backbone import *
-from .rnn import GRU
+from .rnn import GRU, AttEncDec
 from .att_fusion import AttFusion
 
 from .utils import concordance_cc2, mse
@@ -90,9 +90,11 @@ class AffWild2VA(pl.LightningModule):
                 self.att_fuse = AttFusion([512, 512], 128)
                 self.fusion = GRU(512,
                 self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
-            else:
+            elif self.hparams.fusion_type == 'cocnat':
                 self.fusion = GRU(512 * 2,
                 self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
+            elif self.hparams.fusion_type == 'att_dec':
+                self.att_dec = AttEncDec()
 
         self.history = {'lr': [], 'loss': []}
 
@@ -113,8 +115,15 @@ class AffWild2VA(pl.LightningModule):
                     return self.fusion(features)
                 elif self.hparams.fusion_type == 'attention':
                     features = self.att_fuse(audio_feats, video_feats)
-                    features = self.fusion(features)
-                    return features
+                    return self.fusion(features)
+                elif self.hparams.fusion_type == 'att_dec':
+                    features = torch.cat((audio_feats, video_feats), dim=-1)
+                    if 'arousal' in batch.keys()
+                        trg = torch.stack((batch['valence'], batch['arousal']), dim=-1)
+                        predictions = self.att_dec(features, trg)
+                    else:
+                        predictions = self.att_dec(features)
+                    return predictions
             # visual
             else:
                 # return self.visual(x, batch['se_features'], batch['au_features'])
