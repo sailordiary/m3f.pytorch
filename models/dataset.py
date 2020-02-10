@@ -298,6 +298,13 @@ class AffWild2SequenceDataset(Dataset):
             au_valid = np.array([has_au] * track_len) & (np.min(au_labels) >= 0)
             au_labels = np.clip(au_labels, 0, 1)
             '''
+
+        if 'audio' in self.modality:
+            if len(audio) < self.window_len:
+                audio = np.pad(audio, ((0, len(audio) - self.window_len), (0, 0)), 'edge') # (T, C)
+            elif len(audio) > self.window_len:
+                audio = audio[: self.window_len]
+        
         # pad with boundary values, which will be discarded for evaluation
         to_pad = self.window_len - track_len
         if to_pad != 0:
@@ -305,8 +312,6 @@ class AffWild2SequenceDataset(Dataset):
                 inputs = np.pad(inputs, ((0, 0), (0, to_pad), (0, 0), (0, 0)), 'edge') # (C, T, H, W)
                 se_features = np.pad(se_features, ((0, 0), (0, to_pad)), 'edge') # (C, T)
                 au_features = np.pad(au_features, ((0, 0), (0, to_pad)), 'edge') # (C, T)
-            if 'audio' in self.modality:
-                audio = np.pad(audio, ((0, to_pad), (0, 0)), 'edge') # (T, C)
             if self.split != 'test':
                 va_labels = np.pad(va_labels, ((0, to_pad), (0, 0)), 'edge')
                 expr_labels = np.pad(expr_labels, ((0, to_pad)), 'edge')
