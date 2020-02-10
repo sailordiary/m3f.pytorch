@@ -213,19 +213,19 @@ class VA_3DVGGM_Split(nn.Module):
             if split_layer != 5:
                 self.tcn_v = nn.ModuleList([
                     nn.Sequential(
-                        nn.Conv1d(self.inputDim + 512, self.hiddenDim, 5, 2, 2),
+                        nn.Conv1d(self.inputDim + 512, self.hiddenDim, 5, 1, 2),
                         nn.BatchNorm1d(512),
                         nn.ReLU(True),
-                        nn.Conv1d(self.hiddenDim, self.hiddenDim, 5, 2, 2),
+                        nn.Conv1d(self.hiddenDim, self.hiddenDim, 5, 1, 2),
                         nn.BatchNorm1d(512),
                         nn.ReLU(True),
                     )])
                 self.tcn_a = nn.ModuleList([
                     nn.Sequential(
-                        nn.Conv1d(self.inputDim + 512, self.hiddenDim, 5, 2, 2),
+                        nn.Conv1d(self.inputDim + 512, self.hiddenDim, 5, 1, 2),
                         nn.BatchNorm1d(512),
                         nn.ReLU(True),
-                        nn.Conv1d(self.hiddenDim, self.hiddenDim, 5, 2, 2),
+                        nn.Conv1d(self.hiddenDim, self.hiddenDim, 5, 1, 2),
                         nn.BatchNorm1d(512),
                         nn.ReLU(True),
                     )])
