@@ -301,7 +301,7 @@ class AffWild2SequenceDataset(Dataset):
 
         if 'audio' in self.modality:
             if len(audio) < self.window_len:
-                audio = np.pad(audio, ((0, len(audio) - self.window_len), (0, 0)), 'edge') # (T, C)
+                audio = np.pad(audio, ((0, self.window_len - len(audio)), (0, 0)), 'edge') # (T, C)
             elif len(audio) > self.window_len:
                 audio = audio[: self.window_len]
         
