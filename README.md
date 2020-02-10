@@ -10,7 +10,11 @@
 </div>
  
 ## Description
-Valence-arousal estimation models trained on Aff-Wild2.
+This repo holds the PyTorch implementation of the approach described in our report "M³T: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation", which is used for our entry to ABAW Challenge 2020 (VA track). We provide models trained on Aff-Wild2.
+
+## Update
+
+* 2020.02.10: Initial public release
 
 ## How to run   
 First, install dependencies
