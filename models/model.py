@@ -90,7 +90,7 @@ class AffWild2VA(pl.LightningModule):
                 self.att_fuse = AttFusion([512, 512], 128)
                 self.fusion = GRU(512,
                 self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
-            elif self.hparams.fusion_type == 'cocnat':
+            elif self.hparams.fusion_type == 'concat':
                 self.fusion = GRU(512 * 2,
                 self.hparams.num_hidden, 2, fc_outputs, self.hparams.num_fc_layers)
             elif self.hparams.fusion_type == 'att_dec':
