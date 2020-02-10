@@ -21,7 +21,7 @@ python3 -m pip install -r requirements.txt --user
 ```
 
 ## Dataset
-We use the [Aff-Wild2 dataset](https://ibug.doc.ic.ac.uk/resources/aff-wild2/). The raw videos are decoded with ``ffmpeg", and passed to [RetinaFace-ResNet50](https://github.com/deepinsight/insightface/tree/master/RetinaFace) for face detection.
+We use the [Aff-Wild2 dataset](https://ibug.doc.ic.ac.uk/resources/aff-wild2/). The raw videos are decoded with `ffmpeg`, and passed to [RetinaFace-ResNet50](https://github.com/deepinsight/insightface/tree/master/RetinaFace) for face detection.
 
 (Some files are still being uploaded and might not be available at this moment. We apologize for the inconvenience.)
 
@@ -37,7 +37,7 @@ Please note that in addition to the 256-dimensional encoder features, we also sa
 
 ### Log-Mel spectrogram energies
 
-See ``process/extract_melspec.py".
+See `process/extract_melspec.py`.
 
 ## Citation   
 ```
