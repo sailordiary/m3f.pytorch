@@ -282,10 +282,10 @@ class VA_3DVGGM_Split(nn.Module):
                 x_a = self.gru_a(x_a.transpose(1, 2))
                 return torch.cat((x_v, x_a), dim=-1)
             elif self.backend.startswith('tcn'):
-                x_v = self.tcn_v[0](x_v.transpose(1, 2).contiguous())
-                x_v = self.tcn_v[1](x_v)
-                x_a = self.tcn_a[0](x_a.transpose(1, 2).contiguous())
-                x_a = self.tcn_a[1](x_a)
+                x_v = self.tcn_v[0](x_v)
+                x_v = self.tcn_v[1](x_v).transpose(1, 2).contiguous()
+                x_a = self.tcn_a[0](x_a)
+                x_a = self.tcn_a[1](x_a).transpose(1, 2).contiguous()
                 return torch.cat((x_v, x_a), dim=-1)
         else:
             x = x.squeeze()
