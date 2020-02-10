@@ -20,7 +20,7 @@ This repo holds the PyTorch implementation of the approach described in our repo
 First, install dependencies
 ```bash
 # clone project   
-git clone https://github.com/sailordiary/affwild2-va-models
+git clone https://github.com/sailordiary/m3t.pytorch
 python3 -m pip install -r requirements.txt --user
 ```
 
