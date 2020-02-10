@@ -206,9 +206,9 @@ class VA_3DVGGM_Split(nn.Module):
                     # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs) # with TCAE features
                     self.gru_a = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, min(self.nClasses, 1), self.nFCs) # with SE features
                 else:
-                    self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                    self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, self.nClasses-1, self.nFCs)
                     # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
-                    self.gru_a = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
+                    self.gru_a = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, min(self.nClasses, 1), self.nFCs)
         elif self.backend == 'tcn_simple':
             if split_layer != 5:
                 self.tcn_v = nn.ModuleList([
