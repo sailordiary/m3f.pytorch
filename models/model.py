@@ -118,7 +118,7 @@ class AffWild2VA(pl.LightningModule):
                     return self.fusion(features)
                 elif self.hparams.fusion_type == 'att_dec':
                     features = torch.cat((audio_feats, video_feats), dim=-1)
-                    if 'arousal' in batch.keys()
+                    if 'arousal' in batch.keys():
                         trg = torch.stack((batch['valence'], batch['arousal']), dim=-1)
                         predictions = self.att_dec(features, trg)
                     else:
