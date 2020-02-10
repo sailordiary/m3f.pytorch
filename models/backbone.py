@@ -209,6 +209,33 @@ class VA_3DVGGM_Split(nn.Module):
                     self.gru_v = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
                     # self.gru_a = GRU(self.inputDim + 256, self.hiddenDim, self.nLayers, 1, self.nFCs)
                     self.gru_a = GRU(self.inputDim + 512, self.hiddenDim, self.nLayers, 1, self.nFCs)
+        elif self.backend == 'tcn_simple':
+            if split_layer != 5:
+                self.tcn_v = nn.ModuleList([
+                    nn.Sequential(
+                        nn.Conv1d(self.inputDim + 512, self.hiddenDim, 5, 2, 2),
+                        nn.BatchNorm1d(512),
+                        nn.ReLU(True),
+                        nn.Conv1d(self.hiddenDim, self.hiddenDim, 5, 2, 2),
+                        nn.BatchNorm1d(512),
+                        nn.ReLU(True),
+                    )])
+                self.tcn_a = nn.ModuleList([
+                    nn.Sequential(
+                        nn.Conv1d(self.inputDim + 512, self.hiddenDim, 5, 2, 2),
+                        nn.BatchNorm1d(512),
+                        nn.ReLU(True),
+                        nn.Conv1d(self.hiddenDim, self.hiddenDim, 5, 2, 2),
+                        nn.BatchNorm1d(512),
+                        nn.ReLU(True),
+                    )])
+                if self.use_mtl:
+                    if self.nClasses > 0:
+                        self.tcn_v.append(nn.Linear(self.hiddenDim, self.nClasses-1))
+                        self.tcn_a.append(nn.Linear(self.hiddenDim, 1))
+                else:
+                    self.tcn_v.append(nn.Linear(self.hiddenDim, 1))
+                    self.tcn_a.append(nn.Linear(self.hiddenDim, 1))
 
         # initialize
         self._initialize_weights()
@@ -253,6 +280,12 @@ class VA_3DVGGM_Split(nn.Module):
             if self.backend == 'gru':
                 x_v = self.gru_v(x_v.transpose(1, 2))
                 x_a = self.gru_a(x_a.transpose(1, 2))
+                return torch.cat((x_v, x_a), dim=-1)
+            elif self.backend.startswith('tcn'):
+                x_v = self.tcn_v[0](x_v).transpose(1, 2).contiguous()
+                x_v = self.tcn_v[1](x)
+                x_a = self.tcn_a[0](x_a).transpose(1, 2).contiguous()
+                x_a = self.tcn_a[1](x)
                 return torch.cat((x_v, x_a), dim=-1)
         else:
             x = x.squeeze()

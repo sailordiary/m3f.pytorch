@@ -12,8 +12,8 @@ if __name__ == '__main__':
     ccc_v, ccc_a = {}, {}
 
     for name in names:
-        pv = smooth_predictions(pred_v[name])
-        pa = smooth_predictions(pred_a[name])
+        pv = smooth_predictions(pred_v[name], 35, mode='wiener')
+        pa = smooth_predictions(pred_a[name], 35, mode='wiener')
         gv = gt_v[name].numpy()
         ga = gt_a[name].numpy()
         valid = (gv >= -1) & (ga >= -1)
