@@ -4,12 +4,12 @@
  
 # M³T: Multi-Modal Multi-Task Learning for Continuous Valence-Arousal Estimation
 
-[![Paper](http://img.shields.io/badge/paper-arxiv.XXXX.YYYY-B31B1B.svg)](https://arxiv.org)
+[![Paper](http://img.shields.io/badge/paper-arxiv.2002.02957-B31B1B.svg)](https://arxiv.org/abs/2002.02957)
 [![Conference Workshop](http://img.shields.io/badge/FG-2020-4b44ce.svg)](https://ibug.doc.ic.ac.uk/resources/affect-recognition-wild-unimulti-modal-analysis-va/) 
 [![Challenge](http://img.shields.io/badge/ABAW-2020-4b44ce.svg)](https://ibug.doc.ic.ac.uk/resources/fg-2020-competition-affective-behavior-analysis/)   
 </div>
  
-## Description   
+## Description
 Valence-arousal estimation models trained on Aff-Wild2.
 
 ## How to run   
@@ -19,7 +19,7 @@ First, install dependencies
 git clone https://github.com/sailordiary/affwild2-va-models
 ```
 
-You can download our cropped-aligned face tracks here: [256x256](https://mailsucaseducn-my.sharepoint.com/:f:/g/personal/zhangyuanhang15_mails_ucas_edu_cn/ErGo36iyXzFFtHcyXIQIuZABnaLsMiHE1CZ5EhsQ7HzhMw?e=9xBNXT)
+You can download our cropped-aligned face tracks here: [[256x256 px]](https://mailsucaseducn-my.sharepoint.com/:f:/g/personal/zhangyuanhang15_mails_ucas_edu_cn/ErGo36iyXzFFtHcyXIQIuZABnaLsMiHE1CZ5EhsQ7HzhMw?e=9xBNXT)
 
 ## Results
 Aff-Wild2 Valence-Arousal Estimation Model Zoo:
