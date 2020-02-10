@@ -23,13 +23,23 @@ python3 -m pip install -r requirements.txt --user
 ## Dataset
 We use the [Aff-Wild2 dataset](https://ibug.doc.ic.ac.uk/resources/aff-wild2/). The raw videos are decoded with ``ffmpeg", and passed to [RetinaFace-ResNet50](https://github.com/deepinsight/insightface/tree/master/RetinaFace) for face detection.
 
-You can download our version of cropped-aligned face tracks here:
+(Some files are still being uploaded and might not be available at this moment. We apologize for the inconvenience.)
+
+### Cropped-aligned face tracks
 
 **OneDrive**: [[256x256 px]](https://mailsucaseducn-my.sharepoint.com/:f:/g/personal/zhangyuanhang15_mails_ucas_edu_cn/ErGo36iyXzFFtHcyXIQIuZABnaLsMiHE1CZ5EhsQ7HzhMw?e=9xBNXT)
 
-(At this moment some files are still being uploaded, we apologize for the inconvenience.)
+### Pre-computed SENet-101 and TCAE features
 
-### Citation   
+**OneDrive**: [se101-avgpool-512d] [tcae-encoder-268d]
+
+Please note that in addition to the 256-dimensional encoder features, we also saved 12 AU activation scores predicted by TCAE, which together are concatenated into a 268-dimensional vector for each video frame. Feel free to experiment with this information.
+
+### Log-Mel spectrogram energies
+
+See ``process/extract_melspec.py".
+
+## Citation   
 ```
 @misc{zhang2020m3t,
     title={$M^3$T: Multi-Modal Continuous Valence-Arousal Estimation in the Wild},
